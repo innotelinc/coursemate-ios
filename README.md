@@ -267,6 +267,12 @@ server is bound to `0.0.0.0`; then Console.app filtered on `CourseMate:` for
 upload errors. iOS asks for Local Network permission on first use — declining it
 blocks every request silently.
 
+**The answer card never appears, or tapping it does nothing.**
+`docs/device-verification.md` runs the six checks in order and says what each
+failure looks like. Two are easy to miss: the card is gated on the notification
+toggle, and a tap needs the `coursemate://` scheme registered by the installed
+build.
+
 **HTTP is blocked.** Both Info.plists allow arbitrary loads on purpose, because
 a LAN server speaks plain HTTP. Tighten it to `NSExceptionDomains` for your host
 once you are past development.

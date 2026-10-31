@@ -40,12 +40,19 @@ final class AnswerActivity {
             staleDate: Date().addingTimeInterval(600)
         )
 
-        // The card's own End button runs in this process too, so `current` can
-        // point at an activity that is already finished. Updating that returns
-        // false and leaves nothing on screen, so a dead card is replaced instead
-        // of being updated forever.
-        if let current, current.activityState == .active || current.activityState == .stale {
-            Task { _ = await current.update(content) }
+        // Two ways `current` disagrees with what is on screen. The card's End
+        // button runs in this process, so `current` can point at a finished
+        // activity (updating that returns false and leaves nothing visible).
+        // And a Live Activity outlives the process, so after a relaunch
+        // `current` is nil while a card is still up — asking for a new one
+        // would stack a second card next to it. Adopt the live one instead.
+        let live = current ?? Activity<AnswerActivityAttributes>.activities.first {
+            $0.activityState == .active || $0.activityState == .stale
+        }
+
+        if let live {
+            current = live
+            Task { _ = await live.update(content) }
             return
         }
 
