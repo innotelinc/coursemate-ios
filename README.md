@@ -134,6 +134,50 @@ shows what the agent has learned for this course and its accuracy per screen
 type, so a low number tells you where to double-check. Grading works there too,
 so a bad answer found during review still becomes a lesson.
 
+## Live Activity
+
+A notification demands attention you may not want to give mid-lecture. A Live
+Activity does not: `AnswerActivity.swift` starts one per session and updates it,
+so the newest answer sits in the Dynamic Island and on the Lock Screen while the
+course app stays in front. One activity is reused rather than stacked, its
+stale date is ten minutes, and switching sessions ends it because it described
+the old one. It follows the same `Notify on new answers` switch as banners.
+
+## Push (APNs)
+
+Registration is wired end to end and **off by default**, because delivering it
+needs an Apple provider key:
+
+1. Enable the Push Notifications capability on the app id and both extensions.
+2. Put `AuthKey_XXXX.p8` somewhere the server can read.
+3. Set on the server: `COURSEMATE_PUSH=1`, `APNS_KEY_PATH`, `APNS_KEY_ID`,
+   `APNS_TEAM_ID`, and `APNS_TOPIC` (the app's bundle id). Use
+   `APNS_ENVIRONMENT=production` for TestFlight and the App Store.
+
+The app registers at launch, posts its 64-hex token to `POST /api/devices`, and
+the server pushes decisions that are not `needs_human` and score at least
+`COURSEMATE_PUSH_MIN_CONFIDENCE` (0.6). `src/push.js` speaks APNs over HTTP/2
+with an ES256 provider JWT signed by `node:crypto` — no dependency — and drops
+tokens Apple reports as `410 Unregistered`.
+
+Two deliberate choices. The app does **not** declare `aps-environment` in its
+entitlements, because that forces every signing profile to have push enabled and
+would break installs for anyone who just wants local notifications; registration
+is attempted at runtime and failing is harmless. And `push.js` reports
+"not configured" instead of pretending, so a missing key is visible.
+
+## Tests
+
+`CourseMateTests` hosts the app and covers both decoders with 8 XCTest cases:
+multiple choice and free response payloads, `needs_human` arriving as a SQLite
+integer or a Bool, a row with nothing but an id, and the review decoder's
+sessions, lessons, epoch dates and empty input. CI runs them on every push.
+
+They are not decoration. The first run failed with `"quiz_answer" != "Which
+organelle makes ATP?"` — the decoder looked for `text`/`prompt` while the server
+sends `{stem, kind, options}`, so **every quiz headline was falling back to the
+kind label**. That is a silent bug no compiler or structural check would catch.
+
 ## Configuration
 
 The app writes these keys to the App Group; the extension reads them:
@@ -191,6 +235,11 @@ defensively, so an unrecognised kind still renders its label and confidence.
 | `CourseMate/Decisions.swift` | `/api/desk` decoding, correction posting, answer rows |
 | `CourseMate/ReviewView.swift` | session replay, lessons, per-screen accuracy |
 | `CourseMate/AnswerNotifier.swift` | local notifications and background refresh |
+| `CourseMate/AnswerActivity.swift` | starts and updates the Live Activity |
+| `CourseMate/PushRegistration.swift` | APNs registration and the app delegate |
+| `Shared/AnswerActivityAttributes.swift` | Live Activity attributes, app + widget |
+| `CourseMateWidget/CourseMateWidgetBundle.swift` | the widget extension drawing the activity |
+| `CourseMateTests/DecoderTests.swift` | 8 tests pinning the server JSON shapes |
 | `CourseMate/BroadcastLauncher.swift` | presents the system broadcast sheet |
 | `CourseMateBroadcast/SampleHandler.swift` | ReplayKit entry point, live session switch, upload queue |
 | `CourseMateBroadcast/FrameSampler.swift` | throttle, perceptual hash, JPEG |
@@ -242,9 +291,10 @@ fails on any of four things:
 2. A plist or entitlements file does not lint.
 3. An asset catalog `Contents.json` does not parse.
 4. The unsigned simulator build fails.
+5. The unit tests fail (Debug only — Release is not built with testability).
 
-Both configurations build clean on `macos-15` with Xcode 16.4, including the
-step that embeds the extension into `CourseMate.app/PlugIns`.
+Both configurations build clean on `macos-15` with Xcode 16.4, embedding both
+extensions into `CourseMate.app/PlugIns`, and the 8 unit tests pass.
 
 Signing is disabled (`CODE_SIGNING_ALLOWED=NO`), so CI needs no certificate or
 provisioning profile. That means **CI proves the project graph and that the Swift
