@@ -200,6 +200,9 @@ fails on any of four things:
 3. An asset catalog `Contents.json` does not parse.
 4. The unsigned simulator build fails.
 
+Both configurations build clean on `macos-15` with Xcode 16.4, including the
+step that embeds the extension into `CourseMate.app/PlugIns`.
+
 Signing is disabled (`CODE_SIGNING_ALLOWED=NO`), so CI needs no certificate or
 provisioning profile. That means **CI proves the project graph and that the Swift
 compiles — not that the app signs, installs or broadcasts.** Those still need a
