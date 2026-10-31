@@ -9,6 +9,10 @@ struct CourseMateApp: App {
     @StateObject private var launcher = BroadcastLauncher()
     @Environment(\.scenePhase) private var scenePhase
 
+    /// APNs callbacks are UIApplicationDelegate methods; SwiftUI has no
+    /// equivalent, so one delegate is bridged in for them.
+    @UIApplicationDelegateAdaptor(CourseMateAppDelegate.self) private var appDelegate
+
     init() {
         // BGTaskScheduler requires registration before launch completes, and
         // the notification delegate must be set before any banner arrives.
@@ -20,7 +24,13 @@ struct CourseMateApp: App {
             ContentView()
                 .environmentObject(model)
                 .environmentObject(launcher)
-                .onAppear { AnswerNotifier.shared.model = model }
+                .onAppear {
+                    AnswerNotifier.shared.model = model
+                    model.registerPush()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: PushRegistration.refreshNotification)) { _ in
+                    Task { await model.refresh() }
+                }
         }
         .onChange(of: scenePhase) { _, phase in
             // One request per backgrounding; the handler chains the next one.

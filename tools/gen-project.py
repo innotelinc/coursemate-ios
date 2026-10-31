@@ -2,7 +2,7 @@
 """Generate CourseMate.xcodeproj (project + shared scheme).
 
 Xcode's project file is an OpenStep plist keyed by 24-hex object IDs, and this
-project has two targets sharing source files — hand-editing that graph is a
+project has four targets sharing source files — hand-editing that graph is a
 losing game. This script owns it instead: the file lists live below, IDs are
 derived from names so diffs stay readable, and one run regenerates everything.
 
@@ -24,8 +24,13 @@ PROJECT = ROOT / "CourseMate.xcodeproj"
 
 APP = "CourseMate"
 EXT = "CourseMateBroadcast"
+WIDGET = "CourseMateWidget"
+TESTS = "CourseMateTests"
+
 APP_BUNDLE = "us.innotel.coursemate"
 EXT_BUNDLE = APP_BUNDLE + ".broadcast"
+WIDGET_BUNDLE = APP_BUNDLE + ".widget"
+TESTS_BUNDLE = APP_BUNDLE + ".tests"
 APP_GROUP = "group.us.innotel.coursemate"
 
 DEPLOYMENT_TARGET = "17.0"
@@ -42,6 +47,8 @@ FILES = [
     ("CourseMate", "Decisions.swift", "sourcecode.swift", (APP,)),
     ("CourseMate", "ReviewView.swift", "sourcecode.swift", (APP,)),
     ("CourseMate", "AnswerNotifier.swift", "sourcecode.swift", (APP,)),
+    ("CourseMate", "AnswerActivity.swift", "sourcecode.swift", (APP,)),
+    ("CourseMate", "PushRegistration.swift", "sourcecode.swift", (APP,)),
     ("CourseMate", "Assets.xcassets", "folder.assetcatalog", (APP,)),
     ("CourseMate", "Info.plist", "text.plist.xml", ()),
     ("CourseMate", "CourseMate.entitlements", "text.plist.entitlements", ()),
@@ -50,6 +57,11 @@ FILES = [
     ("CourseMateBroadcast", "AudioChunker.swift", "sourcecode.swift", (EXT,)),
     ("CourseMateBroadcast", "Info.plist", "text.plist.xml", ()),
     ("CourseMateBroadcast", "CourseMateBroadcast.entitlements", "text.plist.entitlements", ()),
+    ("CourseMateWidget", "CourseMateWidgetBundle.swift", "sourcecode.swift", (WIDGET,)),
+    ("CourseMateWidget", "Info.plist", "text.plist.xml", ()),
+    ("CourseMateTests", "DecoderTests.swift", "sourcecode.swift", (TESTS,)),
+    # The Live Activity attributes must match byte for byte on both sides.
+    ("Shared", "AnswerActivityAttributes.swift", "sourcecode.swift", (APP, WIDGET)),
     ("Shared", "Settings.swift", "sourcecode.swift", (APP, EXT)),
     ("Shared", "CourseMateAPI.swift", "sourcecode.swift", (APP, EXT)),
     ("Shared", "ControlChannel.swift", "sourcecode.swift", (APP, EXT)),
@@ -58,9 +70,24 @@ FILES = [
 PRODUCTS = [
     (APP, "CourseMate.app", "wrapper.application"),
     (EXT, "CourseMateBroadcast.appex", "wrapper.app-extension"),
+    (WIDGET, "CourseMateWidget.appex", "wrapper.app-extension"),
+    (TESTS, "CourseMateTests.xctest", "wrapper.cfbundle"),
 ]
 
-FOLDERS = ["CourseMate", "CourseMateBroadcast", "Shared"]
+PRODUCT_TYPES = {
+    APP: "com.apple.product-type.application",
+    EXT: "com.apple.product-type.app-extension",
+    WIDGET: "com.apple.product-type.app-extension",
+    TESTS: "com.apple.product-type.bundle.unit-test",
+}
+
+FOLDERS = ["CourseMate", "CourseMateBroadcast", "CourseMateWidget", "CourseMateTests", "Shared"]
+
+#: target -> appex products it embeds
+EMBEDS = {APP: [EXT, WIDGET]}
+
+#: target -> targets it depends on (build order)
+DEPENDS = {APP: [EXT, WIDGET], TESTS: [APP]}
 
 PROJECT_COMMON = {
     "CLANG_ENABLE_MODULES": "YES",
@@ -135,6 +162,51 @@ EXT_SETTINGS = {
     "TARGETED_DEVICE_FAMILY": '"1,2"',
 }
 
+WIDGET_SETTINGS = {
+    "APPLICATION_EXTENSION_API_ONLY": "YES",
+    "CODE_SIGN_STYLE": "Automatic",
+    "CURRENT_PROJECT_VERSION": CURRENT_PROJECT_VERSION,
+    "DEVELOPMENT_TEAM": '""',
+    "GENERATE_INFOPLIST_FILE": "NO",
+    "INFOPLIST_FILE": "CourseMateWidget/Info.plist",
+    "LD_RUNPATH_SEARCH_PATHS": (
+        '("$(inherited)", "@executable_path/Frameworks", '
+        '"@executable_path/../../Frameworks", )'
+    ),
+    "MARKETING_VERSION": MARKETING_VERSION,
+    "PRODUCT_BUNDLE_IDENTIFIER": WIDGET_BUNDLE,
+    "PRODUCT_NAME": '"$(TARGET_NAME)"',
+    "SKIP_INSTALL": "YES",
+    "SWIFT_EMIT_LOC_STRINGS": "YES",
+    "TARGETED_DEVICE_FAMILY": '"1,2"',
+}
+
+TESTS_SETTINGS = {
+    # Hosted by the app so @testable import works; a hostless bundle cannot link
+    # an application target.
+    "BUNDLE_LOADER": '"$(TEST_HOST)"',
+    "CODE_SIGN_STYLE": "Automatic",
+    "CURRENT_PROJECT_VERSION": CURRENT_PROJECT_VERSION,
+    "DEVELOPMENT_TEAM": '""',
+    "GENERATE_INFOPLIST_FILE": "YES",
+    "LD_RUNPATH_SEARCH_PATHS": (
+        '("$(inherited)", "@executable_path/Frameworks", "@loader_path/Frameworks", )'
+    ),
+    "MARKETING_VERSION": MARKETING_VERSION,
+    "PRODUCT_BUNDLE_IDENTIFIER": TESTS_BUNDLE,
+    "PRODUCT_NAME": '"$(TARGET_NAME)"',
+    "SWIFT_EMIT_LOC_STRINGS": "NO",
+    "TARGETED_DEVICE_FAMILY": '"1,2"',
+    "TEST_HOST": '"$(BUILT_PRODUCTS_DIR)/CourseMate.app/CourseMate"',
+}
+
+SETTINGS = {
+    APP: APP_SETTINGS,
+    EXT: EXT_SETTINGS,
+    WIDGET: WIDGET_SETTINGS,
+    TESTS: TESTS_SETTINGS,
+}
+
 SECTION_ORDER = [
     "PBXBuildFile",
     "PBXContainerItemProxy",
@@ -195,13 +267,12 @@ class Builder:
         return "\n".join(out) + "\n"
 
 
-def phase(obj_id: str, name: str, isa: str, members: list[str], extra: list[str] | None = None) -> list[str]:
+def phase(name: str, isa: str, members: list[str]) -> list[str]:
     lines = [f"\t\t\tisa = {isa};", "\t\t\tbuildActionMask = 2147483647;", "\t\t\tfiles = ("]
     lines += [f"\t\t\t\t{member}," for member in members]
     lines += ["\t\t\t);"]
     if name:
         lines.append(f"\t\t\tname = {name};")
-    lines += extra or []
     lines.append("\t\t\trunOnlyForDeploymentPostprocessing = 0;")
     return lines
 
@@ -217,14 +288,10 @@ def build_project() -> str:
     builder = Builder()
 
     project_id = oid("project", "CourseMate")
+    target_ids = {name: oid("target", name) for name in SETTINGS}
+    list_ids = {name: oid("configlist", name) for name in ["project", *SETTINGS]}
     file_ids: dict[tuple[str, str], str] = {}
     product_ids: dict[str, str] = {}
-    target_ids = {APP: oid("target", APP), EXT: oid("target", EXT)}
-    list_ids = {
-        "project": oid("configlist", "project"),
-        APP: oid("configlist", APP),
-        EXT: oid("configlist", EXT),
-    }
 
     # File references
     for folder, name, file_type, _ in FILES:
@@ -248,9 +315,9 @@ def build_project() -> str:
             "\t\t\tsourceTree = BUILT_PRODUCTS_DIR;",
         ])
 
-    # Build files, grouped per target phase
-    sources: dict[str, list[str]] = {APP: [], EXT: []}
-    resources: dict[str, list[str]] = {APP: [], EXT: []}
+    # Build files per target
+    sources: dict[str, list[str]] = {name: [] for name in SETTINGS}
+    resources: dict[str, list[str]] = {name: [] for name in SETTINGS}
     for folder, name, file_type, targets in FILES:
         for target in targets:
             build_id = oid("buildfile", f"{folder}/{name}@{target}")
@@ -263,18 +330,21 @@ def build_project() -> str:
             else:
                 sources[target].append(build_id)
 
-    embed_build = oid("buildfile", "embed-appex")
-    builder.add(embed_build, "PBXBuildFile", [
-        "\t\t\tisa = PBXBuildFile;",
-        f"\t\t\tfileRef = {product_ids[EXT]};",
-        "\t\t\tsettings = {ATTRIBUTES = (RemoveHeadersOnCopy, );};",
-    ])
+    embed_builds: dict[str, str] = {}
+    for host, guests in EMBEDS.items():
+        for guest in guests:
+            embed_id = oid("buildfile", f"embed-{guest}")
+            embed_builds[guest] = embed_id
+            builder.add(embed_id, "PBXBuildFile", [
+                "\t\t\tisa = PBXBuildFile;",
+                f"\t\t\tfileRef = {product_ids[guest]};",
+                "\t\t\tsettings = {ATTRIBUTES = (RemoveHeadersOnCopy, );};",
+            ])
 
     # Groups
     main_group = oid("group", "main")
     products_group = oid("group", "Products")
     folder_groups = {folder: oid("group", folder) for folder in FOLDERS}
-
     children_by_folder: dict[str, list[str]] = {folder: [] for folder in FOLDERS}
     for folder, name, _, _ in FILES:
         children_by_folder[folder].append(file_ids[(folder, name)])
@@ -308,84 +378,77 @@ def build_project() -> str:
     ])
 
     # Phases
-    sources_phase = {target: oid("phase", f"sources-{target}") for target in (APP, EXT)}
-    frameworks_phase = {target: oid("phase", f"frameworks-{target}") for target in (APP, EXT)}
-    resources_phase = {target: oid("phase", f"resources-{target}") for target in (APP, EXT)}
+    sources_phase = {name: oid("phase", f"sources-{name}") for name in SETTINGS}
+    frameworks_phase = {name: oid("phase", f"frameworks-{name}") for name in SETTINGS}
+    resources_phase = {name: oid("phase", f"resources-{name}") for name in SETTINGS}
     embed_phase = oid("phase", "embed-extensions")
 
-    for target in (APP, EXT):
-        builder.add(sources_phase[target], "PBXSourcesBuildPhase",
-                    phase(sources_phase[target], "", "PBXSourcesBuildPhase", sources[target]))
-        builder.add(frameworks_phase[target], "PBXFrameworksBuildPhase",
-                    phase(frameworks_phase[target], "", "PBXFrameworksBuildPhase", []))
-        builder.add(resources_phase[target], "PBXResourcesBuildPhase",
-                    phase(resources_phase[target], "", "PBXResourcesBuildPhase", resources[target]))
+    for name in SETTINGS:
+        builder.add(sources_phase[name], "PBXSourcesBuildPhase",
+                    phase("", "PBXSourcesBuildPhase", sources[name]))
+        builder.add(frameworks_phase[name], "PBXFrameworksBuildPhase",
+                    phase("", "PBXFrameworksBuildPhase", []))
+        if name != TESTS:
+            builder.add(resources_phase[name], "PBXResourcesBuildPhase",
+                        phase("", "PBXResourcesBuildPhase", resources[name]))
 
+    embedded = [embed_builds[guest] for guests in EMBEDS.values() for guest in guests]
     builder.add(embed_phase, "PBXCopyFilesBuildPhase", [
         "\t\t\tisa = PBXCopyFilesBuildPhase;",
         "\t\t\tbuildActionMask = 2147483647;",
         '\t\t\tdstPath = "";',
         "\t\t\tdstSubfolderSpec = 13;",
         "\t\t\tfiles = (",
-        f"\t\t\t\t{embed_build},",
+        *[f"\t\t\t\t{member}," for member in embedded],
         "\t\t\t);",
         '\t\t\tname = "Embed App Extensions";',
         "\t\t\trunOnlyForDeploymentPostprocessing = 0;",
     ])
 
-    # Target dependency: the app embeds the extension
-    proxy_id = oid("proxy", "app->extension")
-    dependency_id = oid("dependency", "app->extension")
-    builder.add(proxy_id, "PBXContainerItemProxy", [
-        "\t\t\tisa = PBXContainerItemProxy;",
-        f"\t\t\tcontainerPortal = {project_id};",
-        "\t\t\tproxyType = 1;",
-        f"\t\t\tremoteGlobalIDString = {target_ids[EXT]};",
-        f'\t\t\tremoteInfo = "{EXT}";',
-    ])
-    builder.add(dependency_id, "PBXTargetDependency", [
-        "\t\t\tisa = PBXTargetDependency;",
-        f"\t\t\ttarget = {target_ids[EXT]};",
-        f"\t\t\ttargetProxy = {proxy_id};",
-    ])
+    # Target dependencies
+    dependencies: dict[str, list[str]] = {name: [] for name in SETTINGS}
+    for owner, needed in DEPENDS.items():
+        for dependency in needed:
+            key = f"{owner}->{dependency}"
+            proxy_id = oid("proxy", key)
+            dependency_id = oid("dependency", key)
+            builder.add(proxy_id, "PBXContainerItemProxy", [
+                "\t\t\tisa = PBXContainerItemProxy;",
+                f"\t\t\tcontainerPortal = {project_id};",
+                "\t\t\tproxyType = 1;",
+                f"\t\t\tremoteGlobalIDString = {target_ids[dependency]};",
+                f'\t\t\tremoteInfo = "{dependency}";',
+            ])
+            builder.add(dependency_id, "PBXTargetDependency", [
+                "\t\t\tisa = PBXTargetDependency;",
+                f"\t\t\ttarget = {target_ids[dependency]};",
+                f"\t\t\ttargetProxy = {proxy_id};",
+            ])
+            dependencies[owner].append(dependency_id)
 
     # Native targets
-    builder.add(target_ids[APP], "PBXNativeTarget", [
-        "\t\t\tisa = PBXNativeTarget;",
-        f"\t\t\tbuildConfigurationList = {list_ids[APP]};",
-        "\t\t\tbuildPhases = (",
-        f"\t\t\t\t{sources_phase[APP]},",
-        f"\t\t\t\t{frameworks_phase[APP]},",
-        f"\t\t\t\t{resources_phase[APP]},",
-        f"\t\t\t\t{embed_phase},",
-        "\t\t\t);",
-        "\t\t\tbuildRules = (",
-        "\t\t\t);",
-        "\t\t\tdependencies = (",
-        "\t\t\t);",
-        f"\t\t\tname = {APP};",
-        f"\t\t\tproductName = {APP};",
-        f"\t\t\tproductReference = {product_ids[APP]};",
-        '\t\t\tproductType = "com.apple.product-type.application";',
-    ])
-
-    builder.add(target_ids[EXT], "PBXNativeTarget", [
-        "\t\t\tisa = PBXNativeTarget;",
-        f"\t\t\tbuildConfigurationList = {list_ids[EXT]};",
-        "\t\t\tbuildPhases = (",
-        f"\t\t\t\t{sources_phase[EXT]},",
-        f"\t\t\t\t{frameworks_phase[EXT]},",
-        f"\t\t\t\t{resources_phase[EXT]},",
-        "\t\t\t);",
-        "\t\t\tbuildRules = (",
-        "\t\t\t);",
-        "\t\t\tdependencies = (",
-        "\t\t\t);",
-        f"\t\t\tname = {EXT};",
-        f"\t\t\tproductName = {EXT};",
-        f"\t\t\tproductReference = {product_ids[EXT]};",
-        '\t\t\tproductType = "com.apple.product-type.app-extension";',
-    ])
+    for name in SETTINGS:
+        phases = [sources_phase[name], frameworks_phase[name]]
+        if name != TESTS:
+            phases.append(resources_phase[name])
+        if name in EMBEDS:
+            phases.append(embed_phase)
+        builder.add(target_ids[name], "PBXNativeTarget", [
+            "\t\t\tisa = PBXNativeTarget;",
+            f"\t\t\tbuildConfigurationList = {list_ids[name]};",
+            "\t\t\tbuildPhases = (",
+            *[f"\t\t\t\t{value}," for value in phases],
+            "\t\t\t);",
+            "\t\t\tbuildRules = (",
+            "\t\t\t);",
+            "\t\t\tdependencies = (",
+            *[f"\t\t\t\t{value}," for value in dependencies[name]],
+            "\t\t\t);",
+            f"\t\t\tname = {name};",
+            f"\t\t\tproductName = {name};",
+            f"\t\t\tproductReference = {product_ids[name]};",
+            f'\t\t\tproductType = "{PRODUCT_TYPES[name]}";',
+        ])
 
     builder.add(project_id, "PBXProject", [
         "\t\t\tisa = PBXProject;",
@@ -394,36 +457,37 @@ def build_project() -> str:
         "\t\t\t\tLastSwiftUpdateCheck = 1600;",
         "\t\t\t\tLastUpgradeCheck = 1600;",
         "\t\t\t\tTargetAttributes = {",
-        f"\t\t\t\t\t{target_ids[APP]} = {{CreatedOnToolsVersion = 16.0;}};",
-        f"\t\t\t\t\t{target_ids[EXT]} = {{CreatedOnToolsVersion = 16.0;}};",
+        *[
+            f"\t\t\t\t\t{target_ids[name]} = {{CreatedOnToolsVersion = 16.0;}};"
+            for name in SETTINGS
+        ],
         "\t\t\t\t};",
         "\t\t\t};",
         f"\t\t\tbuildConfigurationList = {list_ids['project']};",
         '\t\t\tcompatibilityVersion = "Xcode 14.0";',
         "\t\t\tdevelopmentRegion = en;",
         "\t\t\thasScannedForEncodings = 0;",
-        "\t\t\t			knownRegions = (en, Base, );",
+        "\t\t\tknownRegions = (en, Base, );",
         f"\t\t\tmainGroup = {main_group};",
         f"\t\t\tproductRefGroup = {products_group};",
         '\t\t\tprojectDirPath = "";',
         '\t\t\tprojectRoot = "";',
         "\t\t\ttargets = (",
-        f"\t\t\t\t{target_ids[APP]},",
-        f"\t\t\t\t{target_ids[EXT]},",
+        *[f"\t\t\t\t{target_ids[name]}," for name in SETTINGS],
         "\t\t\t);",
     ])
 
     # Build configurations
-    configs = [
+    config_ids = {value: [] for value in list_ids.values()}
+    entries = [
         ("project-debug", "Debug", PROJECT_DEBUG, list_ids["project"]),
         ("project-release", "Release", PROJECT_RELEASE, list_ids["project"]),
-        (f"{APP}-debug", "Debug", APP_SETTINGS, list_ids[APP]),
-        (f"{APP}-release", "Release", APP_SETTINGS, list_ids[APP]),
-        (f"{EXT}-debug", "Debug", EXT_SETTINGS, list_ids[EXT]),
-        (f"{EXT}-release", "Release", EXT_SETTINGS, list_ids[EXT]),
     ]
-    config_ids: dict[str, list[str]] = {list_ids["project"]: [], list_ids[APP]: [], list_ids[EXT]: []}
-    for key, name, settings, owner in configs:
+    for name in SETTINGS:
+        entries.append((f"{name}-debug", "Debug", SETTINGS[name], list_ids[name]))
+        entries.append((f"{name}-release", "Release", SETTINGS[name], list_ids[name]))
+
+    for key, name, settings, owner in entries:
         config_id = oid("config", key)
         config_ids[owner].append(config_id)
         builder.add(config_id, "XCBuildConfiguration", [
@@ -438,41 +502,48 @@ def build_project() -> str:
             "\t\t\tbuildConfigurations = (",
             *[f"\t\t\t\t{config_id}," for config_id in ids],
             "\t\t\t);",
-            '\t\t\tdefaultConfigurationIsVisible = 0;',
+            "\t\t\tdefaultConfigurationIsVisible = 0;",
             "\t\t\tdefaultConfigurationName = Release;",
         ])
 
     return builder.render(project_id)
 
 
-def build_scheme() -> str:
-    app_target = oid("target", APP)
-    reference = (
+def buildable(name: str, product: str) -> str:
+    return (
         '<BuildableReference BuildableIdentifier="primary" '
-        f'BlueprintIdentifier="{app_target}" BuildableName="CourseMate.app" '
-        'BlueprintName="CourseMate" ReferencedContainer="container:CourseMate.xcodeproj"/>'
+        f'BlueprintIdentifier="{oid("target", name)}" BuildableName="{product}" '
+        f'BlueprintName="{name}" ReferencedContainer="container:CourseMate.xcodeproj"/>'
     )
+
+
+def build_scheme() -> str:
+    app = buildable(APP, "CourseMate.app")
+    tests = buildable(TESTS, "CourseMateTests.xctest")
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <Scheme LastUpgradeVersion="1600" version="1.7">
    <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES">
       <BuildActionEntries>
          <BuildActionEntry buildForTesting="YES" buildForRunning="YES" buildForProfiling="YES" buildForArchiving="YES" buildForAnalyzing="YES">
-            {reference}
+            {app}
          </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES">
       <Testables>
+         <TestableReference skipped="NO">
+            {tests}
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" launchStyle="0" useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" debugDocumentVersioning="YES" debugServiceExtension="internal" allowLocationSimulation="YES">
       <BuildableProductRunnable runnableDebuggingMode="0">
-         {reference}
+         {app}
       </BuildableProductRunnable>
    </LaunchAction>
    <ProfileAction buildConfiguration="Release" shouldUseLaunchSchemeArgsEnv="YES" savedToolIdentifier="" useCustomWorkingDirectory="NO" debugDocumentVersioning="YES">
       <BuildableProductRunnable runnableDebuggingMode="0">
-         {reference}
+         {app}
       </BuildableProductRunnable>
    </ProfileAction>
    <AnalyzeAction buildConfiguration="Debug">
@@ -498,17 +569,19 @@ def main() -> int:
     constants = {
         "appBundle": APP_BUNDLE,
         "extensionBundle": EXT_BUNDLE,
+        "widgetBundle": WIDGET_BUNDLE,
+        "testsBundle": TESTS_BUNDLE,
         "appGroup": APP_GROUP,
         "deploymentTarget": DEPLOYMENT_TARGET,
     }
-    entitlement = APP_GROUP
+
     for folder, name in (
         ("CourseMate", "CourseMate.entitlements"),
         ("CourseMateBroadcast", "CourseMateBroadcast.entitlements"),
     ):
         text = (ROOT / folder / name).read_text()
-        if entitlement not in text:
-            print(f"warning: {folder}/{name} does not list {entitlement}", file=sys.stderr)
+        if APP_GROUP not in text:
+            print(f"warning: {folder}/{name} does not list {APP_GROUP}", file=sys.stderr)
 
     settings_file = (ROOT / "Shared" / "Settings.swift").read_text()
     if APP_GROUP not in settings_file:

@@ -6,6 +6,14 @@
 	objectVersion = 56;
 	objects = {
 /* Begin PBXBuildFile section */
+		029F59FD38054E5E40FC33ED = {
+			isa = PBXBuildFile;
+			fileRef = 225568BC86BA875E3B727ED8;
+		};
+		0E8974E1E82C4E5EEAF2DD7E = {
+			isa = PBXBuildFile;
+			fileRef = 72A789974DBC238F2AFC048F;
+		};
 		0F2E2710DBFABAC36B60E439 = {
 			isa = PBXBuildFile;
 			fileRef = B8C01D488E61C469E6073BFA;
@@ -30,6 +38,15 @@
 			isa = PBXBuildFile;
 			fileRef = 0F7C8AAD759931E47CB7B4C0;
 		};
+		40F953F6162094DD2D101F18 = {
+			isa = PBXBuildFile;
+			fileRef = EB90FCDE3D119D69DD1C6A11;
+			settings = {ATTRIBUTES = (RemoveHeadersOnCopy, );};
+		};
+		47550A78451966A82158C9BE = {
+			isa = PBXBuildFile;
+			fileRef = 97CC83918C5101217242D290;
+		};
 		52B685DB3191CF0D71790A9A = {
 			isa = PBXBuildFile;
 			fileRef = 9DDDBB5A1B6F933EFC5A50A7;
@@ -38,18 +55,21 @@
 			isa = PBXBuildFile;
 			fileRef = 1212DDF8A4F8D7203BF3DD46;
 		};
+		5B001796BA48DC5F8350792F = {
+			isa = PBXBuildFile;
+			fileRef = B4C8E93B039C1061998B0A27;
+		};
 		61780525FF9672287CAC542C = {
 			isa = PBXBuildFile;
 			fileRef = 9F60295A21B6ACC92D9E0D1B;
 		};
+		65DDFC3E82DFBAD49BA79769 = {
+			isa = PBXBuildFile;
+			fileRef = F576D26D72DD4EA76E9DAA9B;
+		};
 		73DE0E6382584804F61B8EAD = {
 			isa = PBXBuildFile;
 			fileRef = 644A8B7BD9E69D915257976C;
-		};
-		7C666D8308D5A58F9247AB16 = {
-			isa = PBXBuildFile;
-			fileRef = 13857A3D285E3A572A9A5E37;
-			settings = {ATTRIBUTES = (RemoveHeadersOnCopy, );};
 		};
 		934C732C312673F701C11B01 = {
 			isa = PBXBuildFile;
@@ -63,6 +83,11 @@
 			isa = PBXBuildFile;
 			fileRef = 1B7C42C95DDCBC2B7A3E9ACF;
 		};
+		B26EDF61B2022DFE30DCC6D5 = {
+			isa = PBXBuildFile;
+			fileRef = 13857A3D285E3A572A9A5E37;
+			settings = {ATTRIBUTES = (RemoveHeadersOnCopy, );};
+		};
 		B435390C6693BAFFA0DA919F = {
 			isa = PBXBuildFile;
 			fileRef = 8A7BEECF478B82EA0CB20CC0;
@@ -75,6 +100,10 @@
 			isa = PBXBuildFile;
 			fileRef = 644A8B7BD9E69D915257976C;
 		};
+		D137A128CB016FD2E05320EC = {
+			isa = PBXBuildFile;
+			fileRef = 72A789974DBC238F2AFC048F;
+		};
 		DE0C78B2704D30E431C0D622 = {
 			isa = PBXBuildFile;
 			fileRef = 4BFC7FC93588C83EBCF41FB2;
@@ -85,12 +114,26 @@
 		};
 /* End PBXBuildFile section */
 /* Begin PBXContainerItemProxy section */
-		8FCFD21FA96C331E62091F4B = {
+		51D420BF09E518C25F8F745E = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 32FECA985196667879D86A9E;
 			proxyType = 1;
 			remoteGlobalIDString = 9176906A76F7E4A2B4B9CEE9;
 			remoteInfo = "CourseMateBroadcast";
+		};
+		728A163CC25F807E3B35D52B = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 32FECA985196667879D86A9E;
+			proxyType = 1;
+			remoteGlobalIDString = B5041FF730423A087CF59FF6;
+			remoteInfo = "CourseMateWidget";
+		};
+		E12DF0E91EA1895FCB93A644 = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 32FECA985196667879D86A9E;
+			proxyType = 1;
+			remoteGlobalIDString = D64D3502D45CE3C58330236A;
+			remoteInfo = "CourseMate";
 		};
 /* End PBXContainerItemProxy section */
 /* Begin PBXCopyFilesBuildPhase section */
@@ -100,7 +143,8 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				7C666D8308D5A58F9247AB16,
+				B26EDF61B2022DFE30DCC6D5,
+				40F953F6162094DD2D101F18,
 			);
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -132,6 +176,12 @@
 			path = BroadcastLauncher.swift;
 			sourceTree = "<group>";
 		};
+		225568BC86BA875E3B727ED8 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = DecoderTests.swift;
+			sourceTree = "<group>";
+		};
 		4BFC7FC93588C83EBCF41FB2 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -156,6 +206,19 @@
 			path = Settings.swift;
 			sourceTree = "<group>";
 		};
+		66963D67DE9259DD69A32A01 = {
+			isa = PBXFileReference;
+			explicitFileType = "wrapper.cfbundle";
+			includeInIndex = 0;
+			path = CourseMateTests.xctest;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		72A789974DBC238F2AFC048F = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = AnswerActivityAttributes.swift;
+			sourceTree = "<group>";
+		};
 		83BC3F11E665C6EBE43B25A1 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -173,6 +236,12 @@
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
 			path = ContentView.swift;
+			sourceTree = "<group>";
+		};
+		97CC83918C5101217242D290 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = PushRegistration.swift;
 			sourceTree = "<group>";
 		};
 		9DDDBB5A1B6F933EFC5A50A7 = {
@@ -193,6 +262,12 @@
 			path = SampleHandler.swift;
 			sourceTree = "<group>";
 		};
+		B4C8E93B039C1061998B0A27 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = AnswerActivity.swift;
+			sourceTree = "<group>";
+		};
 		B8C01D488E61C469E6073BFA = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -200,6 +275,12 @@
 			sourceTree = "<group>";
 		};
 		C97950D1C202598F76C6A73C = {
+			isa = PBXFileReference;
+			lastKnownFileType = text.plist.xml;
+			path = Info.plist;
+			sourceTree = "<group>";
+		};
+		CDFB12F13C99A1AFB1BA8F3C = {
 			isa = PBXFileReference;
 			lastKnownFileType = text.plist.xml;
 			path = Info.plist;
@@ -223,10 +304,23 @@
 			path = SettingsView.swift;
 			sourceTree = "<group>";
 		};
+		EB90FCDE3D119D69DD1C6A11 = {
+			isa = PBXFileReference;
+			explicitFileType = "wrapper.app-extension";
+			includeInIndex = 0;
+			path = CourseMateWidget.appex;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 		EC0786F0FDBF47603363FDB3 = {
 			isa = PBXFileReference;
 			lastKnownFileType = text.plist.xml;
 			path = Info.plist;
+			sourceTree = "<group>";
+		};
+		F576D26D72DD4EA76E9DAA9B = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CourseMateWidgetBundle.swift;
 			sourceTree = "<group>";
 		};
 		F854E94F00C4DD3B54078E2A = {
@@ -238,6 +332,20 @@
 /* End PBXFileReference section */
 /* Begin PBXFrameworksBuildPhase section */
 		1972C3BC6EE748582F71BB9E = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		28B582E2A012C050D04A732A = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3325A0B5F4AA3D38362BBDE5 = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -256,6 +364,7 @@
 		01C2552CDA23AE2BFABFB92E = {
 			isa = PBXGroup;
 			children = (
+				72A789974DBC238F2AFC048F,
 				644A8B7BD9E69D915257976C,
 				1212DDF8A4F8D7203BF3DD46,
 				9DDDBB5A1B6F933EFC5A50A7,
@@ -274,6 +383,8 @@
 				D0F5B6C01428D481A193021E,
 				B8C01D488E61C469E6073BFA,
 				9F60295A21B6ACC92D9E0D1B,
+				B4C8E93B039C1061998B0A27,
+				97CC83918C5101217242D290,
 				643D065917F7D0631BFD3D81,
 				EC0786F0FDBF47603363FDB3,
 				CF0AA73501C40CA12FD07A45,
@@ -281,11 +392,30 @@
 			path = CourseMate;
 			sourceTree = "<group>";
 		};
+		903FA9CF6FE6041A7DB64EC4 = {
+			isa = PBXGroup;
+			children = (
+				F576D26D72DD4EA76E9DAA9B,
+				CDFB12F13C99A1AFB1BA8F3C,
+			);
+			path = CourseMateWidget;
+			sourceTree = "<group>";
+		};
+		99696908DED97F86352F86DA = {
+			isa = PBXGroup;
+			children = (
+				225568BC86BA875E3B727ED8,
+			);
+			path = CourseMateTests;
+			sourceTree = "<group>";
+		};
 		A5DE743A222789AC44D1A420 = {
 			isa = PBXGroup;
 			children = (
 				77229820D73EF2EBB7D18675,
 				EC8386977D51D1BB591A8E02,
+				903FA9CF6FE6041A7DB64EC4,
+				99696908DED97F86352F86DA,
 				01C2552CDA23AE2BFABFB92E,
 				C03A4D4348BAAAB286D805F7,
 			);
@@ -296,6 +426,8 @@
 			children = (
 				87F32991A7C4CA2C75958CF6,
 				13857A3D285E3A572A9A5E37,
+				EB90FCDE3D119D69DD1C6A11,
+				66963D67DE9259DD69A32A01,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -331,6 +463,40 @@
 			productReference = 13857A3D285E3A572A9A5E37;
 			productType = "com.apple.product-type.app-extension";
 		};
+		B5041FF730423A087CF59FF6 = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E6D5E03EA9DF697B1F6DF070;
+			buildPhases = (
+				8969043AB8EB9AF1265CD9CD,
+				28B582E2A012C050D04A732A,
+				6E40701FF5B9A00B1CB58304,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CourseMateWidget;
+			productName = CourseMateWidget;
+			productReference = EB90FCDE3D119D69DD1C6A11;
+			productType = "com.apple.product-type.app-extension";
+		};
+		C8873AE3B6D58D1D2601E3F4 = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3EF5F082BE0B05F2EBE80B4A;
+			buildPhases = (
+				15A6622B9DB1342A67609B3A,
+				3325A0B5F4AA3D38362BBDE5,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2C2754C87E9C32A6350C5C90,
+			);
+			name = CourseMateTests;
+			productName = CourseMateTests;
+			productReference = 66963D67DE9259DD69A32A01;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		D64D3502D45CE3C58330236A = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 305B90BF7795927D2D04FE71;
@@ -343,6 +509,8 @@
 			buildRules = (
 			);
 			dependencies = (
+				EEF01AC785559725923E3F01,
+				0230A77B37D9AF0D3C616E3E,
 			);
 			name = CourseMate;
 			productName = CourseMate;
@@ -360,13 +528,15 @@
 				TargetAttributes = {
 					D64D3502D45CE3C58330236A = {CreatedOnToolsVersion = 16.0;};
 					9176906A76F7E4A2B4B9CEE9 = {CreatedOnToolsVersion = 16.0;};
+					B5041FF730423A087CF59FF6 = {CreatedOnToolsVersion = 16.0;};
+					C8873AE3B6D58D1D2601E3F4 = {CreatedOnToolsVersion = 16.0;};
 				};
 			};
 			buildConfigurationList = 5C44CA3991043C065715CEE2;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
-						knownRegions = (en, Base, );
+			knownRegions = (en, Base, );
 			mainGroup = A5DE743A222789AC44D1A420;
 			productRefGroup = C03A4D4348BAAAB286D805F7;
 			projectDirPath = "";
@@ -374,11 +544,20 @@
 			targets = (
 				D64D3502D45CE3C58330236A,
 				9176906A76F7E4A2B4B9CEE9,
+				B5041FF730423A087CF59FF6,
+				C8873AE3B6D58D1D2601E3F4,
 			);
 		};
 /* End PBXProject section */
 /* Begin PBXResourcesBuildPhase section */
 		269B0016FC74B49C98C4DB13 = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6E40701FF5B9A00B1CB58304 = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -395,6 +574,23 @@
 		};
 /* End PBXResourcesBuildPhase section */
 /* Begin PBXSourcesBuildPhase section */
+		15A6622B9DB1342A67609B3A = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				029F59FD38054E5E40FC33ED,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8969043AB8EB9AF1265CD9CD = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				65DDFC3E82DFBAD49BA79769,
+				D137A128CB016FD2E05320EC,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B83157BDB10BE379C78BE298 = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -420,6 +616,9 @@
 				0FFCC9B104B140CD61206034,
 				0F2E2710DBFABAC36B60E439,
 				61780525FF9672287CAC542C,
+				5B001796BA48DC5F8350792F,
+				47550A78451966A82158C9BE,
+				0E8974E1E82C4E5EEAF2DD7E,
 				D05FA3110BD5371B6D57DD12,
 				934C732C312673F701C11B01,
 				BF546FA747398ECC9DCD516C,
@@ -428,13 +627,60 @@
 		};
 /* End PBXSourcesBuildPhase section */
 /* Begin PBXTargetDependency section */
-		63580832C953B0A1FA8BBA3F = {
+		0230A77B37D9AF0D3C616E3E = {
+			isa = PBXTargetDependency;
+			target = B5041FF730423A087CF59FF6;
+			targetProxy = 728A163CC25F807E3B35D52B;
+		};
+		2C2754C87E9C32A6350C5C90 = {
+			isa = PBXTargetDependency;
+			target = D64D3502D45CE3C58330236A;
+			targetProxy = E12DF0E91EA1895FCB93A644;
+		};
+		EEF01AC785559725923E3F01 = {
 			isa = PBXTargetDependency;
 			target = 9176906A76F7E4A2B4B9CEE9;
-			targetProxy = 8FCFD21FA96C331E62091F4B;
+			targetProxy = 51D420BF09E518C25F8F745E;
 		};
 /* End PBXTargetDependency section */
 /* Begin XCBuildConfiguration section */
+		0D56F64C75D0760424DC3141 = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CourseMateWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = us.innotel.coursemate.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		4B5DE36DE94D519EC165A3C2 = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@loader_path/Frameworks", );
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = us.innotel.coursemate.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CourseMate.app/CourseMate";
+			};
+			name = Release;
+		};
 		5A10D63971B57AEC1EC477EF = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -525,6 +771,43 @@
 			};
 			name = Release;
 		};
+		8F961E553C88273E24C29DAB = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CourseMateWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = us.innotel.coursemate.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A8EEA769542719650CB9C9D7 = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@loader_path/Frameworks", );
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = us.innotel.coursemate.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CourseMate.app/CourseMate";
+			};
+			name = Debug;
+		};
 		AE2D64FF71CB863C777B87F8 = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -576,6 +859,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		3EF5F082BE0B05F2EBE80B4A = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A8EEA769542719650CB9C9D7,
+				4B5DE36DE94D519EC165A3C2,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		5C44CA3991043C065715CEE2 = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -590,6 +882,15 @@
 			buildConfigurations = (
 				CE3B73745B46827A039F2181,
 				AE2D64FF71CB863C777B87F8,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E6D5E03EA9DF697B1F6DF070 = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0D56F64C75D0760424DC3141,
+				8F961E553C88273E24C29DAB,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

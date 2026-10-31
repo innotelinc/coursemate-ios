@@ -128,6 +128,8 @@ final class AppModel: ObservableObject {
                     self.primedSession = nil
                     self.seenDecisionIDs = []
                     self.busy = false
+                    // The old card belongs to the session it described.
+                    AnswerActivity.shared.clear()
                     // Bumps the revision, so a running broadcast moves to the
                     // new session on its next frame instead of needing a restart.
                     self.persist()
@@ -139,6 +141,13 @@ final class AppModel: ObservableObject {
                 }
             }
         }
+    }
+
+    /// APNs registration, with the token reported back to the server so it can
+    /// push later. Fails harmlessly when the build has no push entitlement.
+    func registerPush() {
+        PushRegistration.shared.configure(base: CMSettings.normalize(server), token: token)
+        PushRegistration.shared.request()
     }
 
     func testServer() {
@@ -266,6 +275,8 @@ final class AppModel: ObservableObject {
                   !decision.answer.isEmpty
             else { continue }
             AnswerNotifier.shared.post(decision)
+            // The Live Activity is what shows over the course app itself.
+            AnswerActivity.shared.show(decision, course: course)
         }
     }
 }

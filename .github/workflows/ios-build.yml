@@ -42,6 +42,7 @@ jobs:
         run: |
           set -euo pipefail
           for f in CourseMate/Info.plist CourseMateBroadcast/Info.plist \
+                   CourseMateWidget/Info.plist \
                    CourseMate/CourseMate.entitlements CourseMateBroadcast/CourseMateBroadcast.entitlements; do
             plutil -lint "$f"
           done
@@ -80,6 +81,24 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             PROVISIONING_PROFILE_SPECIFIER="" \
             build 2>&1 | tail -n 250
+
+      # Debug only: the test bundle hosts the app, and Release is not built with
+      # testability, which @testable import needs.
+      - name: Unit tests
+        if: matrix.configuration == 'Debug'
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project CourseMate.xcodeproj \
+            -scheme CourseMate \
+            -configuration Debug \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            2>&1 | tail -n 250
 
       - name: Artifacts
         if: always()
