@@ -19,6 +19,7 @@ struct ContentView: View {
                 sessionSection
                 broadcastSection
                 deskSection
+                reviewSection
                 serverSection
 
                 if let notice = model.notice {
@@ -140,6 +141,13 @@ struct ContentView: View {
         Section {
             extensionRow
 
+            Toggle(isOn: Binding(
+                get: { model.notifyHighConfidence },
+                set: { model.toggleNotifications($0) }
+            )) {
+                Label("Notify on new answers", systemImage: "bell.badge")
+            }
+
             if let error = model.deskError {
                 Text(error)
                     .font(.footnote)
@@ -157,7 +165,14 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
             } else {
                 ForEach(model.decisions) { decision in
-                    DecisionRow(decision: decision)
+                    DecisionRow(
+                        decision: decision,
+                        graded: model.graded[decision.id],
+                        grading: model.grading.contains(decision.id),
+                        onGrade: { correct, truth in
+                            model.grade(decision, correct: correct, truth: truth)
+                        }
+                    )
                 }
             }
         } header: {
@@ -171,7 +186,20 @@ struct ContentView: View {
                 }
             }
         } footer: {
-            Text("Newest first, refreshed every few seconds. The broadcast keeps running while you read these; Copy puts the drafted answer on the clipboard.")
+            Text("Newest first, refreshed every few seconds. Right/Wrong is sent to the server as a correction; a wrong answer with the right one attached becomes a lesson. Copy puts the drafted answer on the clipboard.")
+        }
+    }
+
+    private var reviewSection: some View {
+        Section {
+            NavigationLink {
+                ReviewView()
+                    .environmentObject(model)
+            } label: {
+                Label("Review past sessions", systemImage: "clock.arrow.circlepath")
+            }
+        } footer: {
+            Text("Every session's answers and notes, plus what the agent has learned for this course.")
         }
     }
 

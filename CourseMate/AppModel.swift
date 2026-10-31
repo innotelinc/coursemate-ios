@@ -23,8 +23,22 @@ final class AppModel: ObservableObject {
     @Published private(set) var deskError: String?
     @Published private(set) var extensionStatus: CMStatusPayload?
 
+    /// Decision id → whether a human agreed, and which ones are in flight.
+    @Published private(set) var graded: [String: Bool] = [:]
+    @Published private(set) var grading: Set<String> = []
+
+    /// Off until permission is granted; the toggle asks iOS for it.
+    @Published private(set) var notifyHighConfidence: Bool
+
+    private static let notifyKey = "cm_notify_high_confidence"
+
     /// Every write bumps this so the extension can tell a change from a rewrite.
     private var revision: Int
+
+    /// Ids already announced, and the session already primed. Priming is what
+    /// stops the first poll from firing twenty notifications for history.
+    private var seenDecisionIDs: Set<String> = []
+    private var primedSession: String?
 
     init() {
         let stored = CMSettings.load()
@@ -33,6 +47,7 @@ final class AppModel: ObservableObject {
         course = stored.course
         sessionID = stored.sessionID
         revision = CMSettings.currentRevision()
+        notifyHighConfidence = UserDefaults.standard.bool(forKey: Self.notifyKey)
     }
 
     var settings: CMSettings {
@@ -110,6 +125,8 @@ final class AppModel: ObservableObject {
                     self.sessionID = id
                     self.decisions = []
                     self.deskError = nil
+                    self.primedSession = nil
+                    self.seenDecisionIDs = []
                     self.busy = false
                     // Bumps the revision, so a running broadcast moves to the
                     // new session on its next frame instead of needing a restart.
@@ -138,8 +155,59 @@ final class AppModel: ObservableObject {
         }
     }
 
-    /// Called on a loop while the view is on screen: extension status is a local
-    /// file read, decisions come from the server.
+    /// Grading a decision feeds `POST /api/correct`; a wrong answer with the
+    /// right one attached becomes a lesson immediately.
+    func grade(_ decision: CMDecision, correct: Bool, truth: String) {
+        guard !grading.contains(decision.id) else { return }
+        grading.insert(decision.id)
+
+        let base = server
+        let bearer = token
+        let id = decision.id
+
+        Task {
+            do {
+                try await CourseMateAPI.correct(
+                    base: base,
+                    token: bearer,
+                    decisionID: id,
+                    correct: correct,
+                    truth: truth
+                )
+                await MainActor.run {
+                    self.grading.remove(id)
+                    self.graded[id] = correct
+                }
+            } catch {
+                await MainActor.run {
+                    self.grading.remove(id)
+                    self.notice = "Could not record that: \(error.localizedDescription)"
+                }
+            }
+        }
+    }
+
+    /// Asks iOS for permission before turning the toggle on, and turns it back
+    /// off if the answer is no — a toggle that stays on while nothing is
+    /// delivered would be a lie.
+    func toggleNotifications(_ on: Bool) {
+        guard on else {
+            notifyHighConfidence = false
+            return
+        }
+        AnswerNotifier.shared.requestPermission { [weak self] granted in
+            guard let self else { return }
+            self.notifyHighConfidence = granted
+            UserDefaults.standard.set(granted, forKey: Self.notifyKey)
+            if !granted {
+                self.notice = "Notifications are not allowed for CourseMate. Enable them in iOS Settings."
+            }
+        }
+    }
+
+    /// Called on a loop while the view is on screen, and by the background
+    /// refresh: extension status is a local file read, decisions come from the
+    /// server.
     func refresh() async {
         let status = ControlChannel.readStatus()
         await MainActor.run { self.extensionStatus = status }
@@ -166,9 +234,38 @@ final class AppModel: ObservableObject {
             await MainActor.run {
                 self.decisions = list
                 self.deskError = nil
+                self.announce(list)
             }
         } catch {
             await MainActor.run { self.deskError = error.localizedDescription }
+        }
+    }
+
+    // MARK: - Notifications
+
+    /// Announces only what is new, only when the answer is worth interrupting
+    /// for, and never the backlog that already existed when the app opened.
+    private func announce(_ list: [CMDecision]) {
+        let session = sessionID
+
+        if primedSession != session {
+            primedSession = session
+            seenDecisionIDs.formUnion(list.map(\.id))
+            return
+        }
+
+        guard notifyHighConfidence else {
+            seenDecisionIDs.formUnion(list.map(\.id))
+            return
+        }
+
+        for decision in list.reversed() where !seenDecisionIDs.contains(decision.id) {
+            seenDecisionIDs.insert(decision.id)
+            guard !decision.needsHuman,
+                  decision.confidence >= 0.6,
+                  !decision.answer.isEmpty
+            else { continue }
+            AnswerNotifier.shared.post(decision)
         }
     }
 }

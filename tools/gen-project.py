@@ -40,6 +40,8 @@ FILES = [
     ("CourseMate", "AppModel.swift", "sourcecode.swift", (APP,)),
     ("CourseMate", "BroadcastLauncher.swift", "sourcecode.swift", (APP,)),
     ("CourseMate", "Decisions.swift", "sourcecode.swift", (APP,)),
+    ("CourseMate", "ReviewView.swift", "sourcecode.swift", (APP,)),
+    ("CourseMate", "AnswerNotifier.swift", "sourcecode.swift", (APP,)),
     ("CourseMate", "Assets.xcassets", "folder.assetcatalog", (APP,)),
     ("CourseMate", "Info.plist", "text.plist.xml", ()),
     ("CourseMate", "CourseMate.entitlements", "text.plist.entitlements", ()),

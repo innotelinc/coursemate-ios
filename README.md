@@ -96,6 +96,44 @@ under it says how long ago the last frame was accepted.
 - **Two uploads in flight at most.** A slow network drops frames instead of
   stalling ReplayKit's sample queue, which would stutter the broadcast itself.
 
+## Grading from the phone
+
+Every answer row has **Right** / **Wrong**. Right posts `{"correct": true}`.
+Wrong opens a field for the actual answer and posts
+`{"correct": false, "truth": "..."}`, which makes the server write a lesson
+straight away (`recordCorrection`) so the next similar screen is answered with
+it. Same loop as the dashboard, reachable without leaving the lecture.
+
+## Notifications
+
+`Notify on new answers` asks iOS for permission the first time you switch it on,
+and switches itself back off if the answer is no rather than pretending to work.
+It announces decisions that are **not** flagged `needs_human` and score at least
+0.6, and it primes on first load — opening the app mid-lecture does not fire
+twenty notifications for history.
+
+What actually reaches you while you are in another app:
+
+| Situation | Delivered? |
+| --- | --- |
+| App on screen | Yes — the delegate returns `.banner` |
+| Just backgrounded | Usually; a background task keeps the poll alive briefly |
+| Minutes later | `BGAppRefreshTask`, **when iOS decides to run it** |
+| Phone locked, hours in | No |
+
+A reliable ping forty minutes into a lecture needs APNs and a push-capable
+server. That is not faked here. `BGTaskSchedulerPermittedIdentifiers` and
+`UIBackgroundModes: fetch` cover the best-effort path that does exist.
+
+## Review
+
+`Review past sessions` lists recent sessions from `GET /api/me`, and each one
+opens its decisions grouped into answers, notes and other — which is how the
+lecture notes taken during a session are readable afterwards. The same screen
+shows what the agent has learned for this course and its accuracy per screen
+type, so a low number tells you where to double-check. Grading works there too,
+so a bad answer found during review still becomes a lesson.
+
 ## Configuration
 
 The app writes these keys to the App Group; the extension reads them:
@@ -132,6 +170,9 @@ POST /api/ingest/frame   {"session_id": "...", "image_b64": "<jpeg>",
 POST /api/ingest/audio   {"session_id": "...", "audio_b64": "<wav>",
                           "mime": "audio/wav"}
 GET  /api/desk?session_id=ses_...&limit=20                      -> {"decisions": [...]}
+POST /api/correct       {"decision_id": "dec_...", "correct": false,
+                         "truth": "42 kJ/mol"}                  -> {"stats": [...], "totals": {...}}
+GET  /api/me?course=BIOL%20201                                  -> {"sessions": [...], "lessons": [...], "stats": [...]}
 GET  /api/health
 ```
 
@@ -147,7 +188,9 @@ defensively, so an unrecognised kind still renders its label and confidence.
 | `CourseMate/ContentView.swift` | session, broadcast state, answers, server status |
 | `CourseMate/SettingsView.swift` | endpoint, token, course, App Group diagnosis |
 | `CourseMate/AppModel.swift` | session creation, persistence, health, decision polling |
-| `CourseMate/Decisions.swift` | `/api/desk` decoding and the answer rows |
+| `CourseMate/Decisions.swift` | `/api/desk` decoding, correction posting, answer rows |
+| `CourseMate/ReviewView.swift` | session replay, lessons, per-screen accuracy |
+| `CourseMate/AnswerNotifier.swift` | local notifications and background refresh |
 | `CourseMate/BroadcastLauncher.swift` | presents the system broadcast sheet |
 | `CourseMateBroadcast/SampleHandler.swift` | ReplayKit entry point, live session switch, upload queue |
 | `CourseMateBroadcast/FrameSampler.swift` | throttle, perceptual hash, JPEG |

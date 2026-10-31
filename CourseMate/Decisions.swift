@@ -130,13 +130,40 @@ extension CourseMateAPI {
         let rows = object?["decisions"] as? [[String: Any]] ?? []
         return rows.compactMap(DecisionDecoder.from)
     }
+
+    /// Feeds the correction loop: a wrong answer with the right one attached
+    /// becomes a lesson immediately, without waiting for a reflection pass.
+    static func correct(
+        base: String,
+        token: String,
+        decisionID: String,
+        correct: Bool,
+        truth: String
+    ) async throws {
+        _ = try await post(
+            base: base,
+            token: token,
+            path: "/api/correct",
+            payload: [
+                "decision_id": decisionID,
+                "correct": correct,
+                "truth": truth,
+            ]
+        )
+    }
 }
 
 // MARK: - Row
 
 struct DecisionRow: View {
     let decision: CMDecision
+    var graded: Bool? = nil
+    var grading: Bool = false
+    var onGrade: ((Bool, String) -> Void)? = nil
+
     @State private var copied = false
+    @State private var askingTruth = false
+    @State private var truth = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -206,11 +233,52 @@ struct DecisionRow: View {
                     .font(.caption)
                     .buttonStyle(.borderless)
                 }
+
+                if onGrade != nil {
+                    if let graded {
+                        Label(
+                            graded ? "marked right" : "marked wrong",
+                            systemImage: graded ? "checkmark.circle.fill" : "xmark.circle.fill"
+                        )
+                        .font(.caption2)
+                        .foregroundStyle(graded ? Color.green : Color.orange)
+                    } else if grading {
+                        ProgressView().scaleEffect(0.7)
+                    } else {
+                        Button {
+                            onGrade?(true, "")
+                        } label: {
+                            Label("Right", systemImage: "checkmark")
+                                .font(.caption2)
+                        }
+                        .buttonStyle(.borderless)
+
+                        Button {
+                            askingTruth = true
+                        } label: {
+                            Label("Wrong", systemImage: "xmark")
+                                .font(.caption2)
+                        }
+                        .buttonStyle(.borderless)
+                        .tint(.orange)
+                    }
+                }
+
                 if !decision.evidence.isEmpty {
                     Text(decision.evidence).font(.caption2).foregroundStyle(.tertiary)
                 }
             }
         }
         .padding(.vertical, 2)
+        .alert("What was the right answer?", isPresented: $askingTruth) {
+            TextField("e.g. 42 kJ/mol", text: $truth)
+            Button("Send") {
+                onGrade?(false, truth)
+                truth = ""
+            }
+            Button("Cancel", role: .cancel) { truth = "" }
+        } message: {
+            Text("It becomes a lesson the agent applies on later screens. Leaving it blank still records the correction.")
+        }
     }
 }

@@ -6,6 +6,10 @@
 	objectVersion = 56;
 	objects = {
 /* Begin PBXBuildFile section */
+		0F2E2710DBFABAC36B60E439 = {
+			isa = PBXBuildFile;
+			fileRef = B8C01D488E61C469E6073BFA;
+		};
 		0FFCC9B104B140CD61206034 = {
 			isa = PBXBuildFile;
 			fileRef = D0F5B6C01428D481A193021E;
@@ -33,6 +37,10 @@
 		562A8D50479A44F0F3CDFB3F = {
 			isa = PBXBuildFile;
 			fileRef = 1212DDF8A4F8D7203BF3DD46;
+		};
+		61780525FF9672287CAC542C = {
+			isa = PBXBuildFile;
+			fileRef = 9F60295A21B6ACC92D9E0D1B;
 		};
 		73DE0E6382584804F61B8EAD = {
 			isa = PBXBuildFile;
@@ -173,10 +181,22 @@
 			path = ControlChannel.swift;
 			sourceTree = "<group>";
 		};
+		9F60295A21B6ACC92D9E0D1B = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = AnswerNotifier.swift;
+			sourceTree = "<group>";
+		};
 		B1536B39588FC458C8DE98F9 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
 			path = SampleHandler.swift;
+			sourceTree = "<group>";
+		};
+		B8C01D488E61C469E6073BFA = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = ReviewView.swift;
 			sourceTree = "<group>";
 		};
 		C97950D1C202598F76C6A73C = {
@@ -252,6 +272,8 @@
 				0F7C8AAD759931E47CB7B4C0,
 				1B7C42C95DDCBC2B7A3E9ACF,
 				D0F5B6C01428D481A193021E,
+				B8C01D488E61C469E6073BFA,
+				9F60295A21B6ACC92D9E0D1B,
 				643D065917F7D0631BFD3D81,
 				EC0786F0FDBF47603363FDB3,
 				CF0AA73501C40CA12FD07A45,
@@ -396,6 +418,8 @@
 				3FB2B271BC00F33815A7ADF3,
 				B2213642ED2FFF8EA945985F,
 				0FFCC9B104B140CD61206034,
+				0F2E2710DBFABAC36B60E439,
+				61780525FF9672287CAC542C,
 				D05FA3110BD5371B6D57DD12,
 				934C732C312673F701C11B01,
 				BF546FA747398ECC9DCD516C,
