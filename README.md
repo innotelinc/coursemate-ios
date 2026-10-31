@@ -64,10 +64,25 @@ open CourseMate.xcodeproj
 3. Tap **Start broadcast** — the system sheet asks you to confirm, and a red
    status bar appears.
 4. Switch to the course. Frames and audio keep flowing.
+5. Swipe back to CourseMate to read the **Answers** list — newest first, with a
+   Copy button — while the broadcast keeps running.
 
 Or from Control Centre at any time: long-press the record control → CourseMate
 → Start. That path needs a session id already stored in the App Group, so start
 one from the app first.
+
+## Switching courses mid-broadcast
+
+Starting a new session while broadcasting does **not** need a restart. The app
+writes the new session to `control.json` in the App Group with a bumped
+revision; the extension checks that file's modification date (a throttled
+`stat`, twice a second) and adopts the change on the next sample buffer. When
+the session changes it also clears the frame hash and the buffered PCM, because
+both belong to the previous session.
+
+The `Answers` section shows whether this worked: the dot turns green when the
+extension's last report names the session selected in the app, and the line
+under it says how long ago the last frame was accepted.
 
 ## How the extension behaves
 
@@ -92,10 +107,21 @@ The app writes these keys to the App Group; the extension reads them:
 | `cm_session` | session created via `POST /api/session` |
 | `cm_course` | course label |
 
+They are stored twice: in `UserDefaults` (for the Control Centre path and for
+debugging with `defaults read`) and in `control.json`, which is what the running
+extension actually polls.
+
 With a free Apple ID the App Group container is not provisioned. The app tells
 you when this happens, and the extension falls back to the commented-out
 `cm_url` / `cm_session` keys in `CourseMateBroadcast/Info.plist` — uncomment,
-fill in, rebuild the extension target.
+fill in, rebuild the extension target. That fallback is static: without the
+container, a session switch cannot reach a running broadcast.
+
+## What CI cannot check
+
+The unsigned build proves the project graph and that both targets compile. It
+does not prove signing, installation, or that a broadcast actually runs — those
+need a team, a device, and a session on a reachable server.
 
 ## Wire protocol
 
@@ -105,23 +131,32 @@ POST /api/ingest/frame   {"session_id": "...", "image_b64": "<jpeg>",
                           "mime": "image/jpeg", "hash": "<hex>"}
 POST /api/ingest/audio   {"session_id": "...", "audio_b64": "<wav>",
                           "mime": "audio/wav"}
+GET  /api/desk?session_id=ses_...&limit=20                      -> {"decisions": [...]}
 GET  /api/health
 ```
+
+`/api/desk` rows carry `kind`, `screen_type`, `confidence`, `needs_human` and a
+per-kind `payload` (`quiz_answer` has `question`, `chosen_text`, `answer_text`,
+`work`; `essay` has `prose`; `error` has `error`). `Decisions.swift` decodes it
+defensively, so an unrecognised kind still renders its label and confidence.
 
 ## Source map
 
 | Path | What it does |
 | --- | --- |
-| `CourseMate/ContentView.swift` | session, broadcast state, server status |
+| `CourseMate/ContentView.swift` | session, broadcast state, answers, server status |
 | `CourseMate/SettingsView.swift` | endpoint, token, course, App Group diagnosis |
-| `CourseMate/AppModel.swift` | session creation, persistence, health check |
+| `CourseMate/AppModel.swift` | session creation, persistence, health, decision polling |
+| `CourseMate/Decisions.swift` | `/api/desk` decoding and the answer rows |
 | `CourseMate/BroadcastLauncher.swift` | presents the system broadcast sheet |
-| `CourseMateBroadcast/SampleHandler.swift` | ReplayKit entry point, upload queue |
+| `CourseMateBroadcast/SampleHandler.swift` | ReplayKit entry point, live session switch, upload queue |
 | `CourseMateBroadcast/FrameSampler.swift` | throttle, perceptual hash, JPEG |
 | `CourseMateBroadcast/AudioChunker.swift` | PCM → 16-bit mono WAV |
 | `Shared/Settings.swift` | App Group storage with Info.plist fallback |
-| `Shared/CourseMateAPI.swift` | the three HTTP calls, shared by both targets |
+| `Shared/ControlChannel.swift` | control/status files: live switching and upload feedback |
+| `Shared/CourseMateAPI.swift` | the HTTP calls, shared by both targets |
 | `tools/gen-project.py` | regenerates the Xcode project and scheme |
+| `.github/workflows/ios-build.yml` | CI: project drift check, lint, unsigned build |
 
 The project file is generated, because two targets sharing five sources makes
 it painful to maintain by hand. After adding a file:
@@ -144,14 +179,37 @@ blocks every request silently.
 a LAN server speaks plain HTTP. Tighten it to `NSExceptionDomains` for your host
 once you are past development.
 
-**Session replaced but the extension still posts to the old one.** The extension
-reads the App Group in `broadcastStarted`; stop and restart the broadcast after
-changing sessions.
+**Session replaced but the extension still posts to the old one.** That should
+not need a restart: the extension re-reads `control.json` continuously and the
+`Answers` header shows which session it is actually posting to. If it stays on
+the old one, the App Group is not shared — check the note in Settings, and that
+both targets use `group.us.inotnel.coursemate`.
+
+**Frames arrive but `Answers` stays empty.** `/api/desk` is what fills it; if
+`deskError` shows an HTTP status, the server rejected the request — usually a
+missing bearer token, since the same token guards ingest and desk.
+
+## CI
+
+`.github/workflows/ios-build.yml` runs on `macos-15` for both configurations and
+fails on any of four things:
+
+1. `CourseMate.xcodeproj` disagrees with `tools/gen-project.py` — a hand-edited
+   or stale generated project.
+2. A plist or entitlements file does not lint.
+3. An asset catalog `Contents.json` does not parse.
+4. The unsigned simulator build fails.
+
+Signing is disabled (`CODE_SIGNING_ALLOWED=NO`), so CI needs no certificate or
+provisioning profile. That means **CI proves the project graph and that the Swift
+compiles — not that the app signs, installs or broadcasts.** Those still need a
+real team and a device.
 
 ## Status
 
 Written against iOS 17 SDK and ReplayKit's sample-buffer broadcast API. The
 Xcode project is generated by `tools/gen-project.py` and structurally checked
-(plist parsing, object-graph integrity, JSON assets), but this repository was
-produced on Linux without Xcode, so no build or on-device run has been performed
-here. Expect to fix signing identifiers on first open, nothing more.
+(plist parsing, object-graph integrity, JSON assets) before being committed, and
+CI compiles it unsigned on macOS. This repository was authored on Linux without
+Xcode, so no build has been run in this working copy and nothing has been
+exercised on a device. Expect to fix signing identifiers on first open.

@@ -47,7 +47,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Broadcast extension")
                 } footer: {
-                    Text("The extension runs in its own process and reads these values from the shared App Group. Without that container it falls back to the cm_url and cm_session keys in its Info.plist.")
+                    Text("The extension runs in its own process and reads these values from the shared App Group, re-checking while it broadcasts — so a new session takes effect without stopping the broadcast. Without that container it falls back to the cm_url and cm_session keys in its Info.plist and cannot follow changes.")
                 }
 
                 Section("How to broadcast") {

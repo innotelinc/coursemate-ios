@@ -6,6 +6,10 @@
 	objectVersion = 56;
 	objects = {
 /* Begin PBXBuildFile section */
+		0FFCC9B104B140CD61206034 = {
+			isa = PBXBuildFile;
+			fileRef = D0F5B6C01428D481A193021E;
+		};
 		132B14A233CA08DA347317B3 = {
 			isa = PBXBuildFile;
 			fileRef = D3CE248285EBC537CBDC2061;
@@ -21,6 +25,10 @@
 		3FB2B271BC00F33815A7ADF3 = {
 			isa = PBXBuildFile;
 			fileRef = 0F7C8AAD759931E47CB7B4C0;
+		};
+		52B685DB3191CF0D71790A9A = {
+			isa = PBXBuildFile;
+			fileRef = 9DDDBB5A1B6F933EFC5A50A7;
 		};
 		562A8D50479A44F0F3CDFB3F = {
 			isa = PBXBuildFile;
@@ -50,6 +58,10 @@
 		B435390C6693BAFFA0DA919F = {
 			isa = PBXBuildFile;
 			fileRef = 8A7BEECF478B82EA0CB20CC0;
+		};
+		BF546FA747398ECC9DCD516C = {
+			isa = PBXBuildFile;
+			fileRef = 9DDDBB5A1B6F933EFC5A50A7;
 		};
 		D05FA3110BD5371B6D57DD12 = {
 			isa = PBXBuildFile;
@@ -155,6 +167,12 @@
 			path = ContentView.swift;
 			sourceTree = "<group>";
 		};
+		9DDDBB5A1B6F933EFC5A50A7 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = ControlChannel.swift;
+			sourceTree = "<group>";
+		};
 		B1536B39588FC458C8DE98F9 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -171,6 +189,12 @@
 			isa = PBXFileReference;
 			lastKnownFileType = text.plist.entitlements;
 			path = CourseMate.entitlements;
+			sourceTree = "<group>";
+		};
+		D0F5B6C01428D481A193021E = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = Decisions.swift;
 			sourceTree = "<group>";
 		};
 		D3CE248285EBC537CBDC2061 = {
@@ -214,6 +238,7 @@
 			children = (
 				644A8B7BD9E69D915257976C,
 				1212DDF8A4F8D7203BF3DD46,
+				9DDDBB5A1B6F933EFC5A50A7,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -226,6 +251,7 @@
 				D3CE248285EBC537CBDC2061,
 				0F7C8AAD759931E47CB7B4C0,
 				1B7C42C95DDCBC2B7A3E9ACF,
+				D0F5B6C01428D481A193021E,
 				643D065917F7D0631BFD3D81,
 				EC0786F0FDBF47603363FDB3,
 				CF0AA73501C40CA12FD07A45,
@@ -356,6 +382,7 @@
 				DE0C78B2704D30E431C0D622,
 				73DE0E6382584804F61B8EAD,
 				562A8D50479A44F0F3CDFB3F,
+				52B685DB3191CF0D71790A9A,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -368,8 +395,10 @@
 				132B14A233CA08DA347317B3,
 				3FB2B271BC00F33815A7ADF3,
 				B2213642ED2FFF8EA945985F,
+				0FFCC9B104B140CD61206034,
 				D05FA3110BD5371B6D57DD12,
 				934C732C312673F701C11B01,
+				BF546FA747398ECC9DCD516C,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

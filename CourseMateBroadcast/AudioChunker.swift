@@ -37,6 +37,14 @@ final class AudioChunker {
         pcm.isEmpty ? nil : drain()
     }
 
+    /// Called when the session changes mid-broadcast: the buffered PCM belongs
+    /// to the previous session, so it is dropped rather than attributed to the
+    /// new one.
+    func reset() {
+        pcm.removeAll(keepingCapacity: true)
+        windowStart = Date()
+    }
+
     private func drain() -> Data? {
         windowStart = Date()
         let payload = pcm

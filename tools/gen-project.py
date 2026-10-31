@@ -39,6 +39,7 @@ FILES = [
     ("CourseMate", "SettingsView.swift", "sourcecode.swift", (APP,)),
     ("CourseMate", "AppModel.swift", "sourcecode.swift", (APP,)),
     ("CourseMate", "BroadcastLauncher.swift", "sourcecode.swift", (APP,)),
+    ("CourseMate", "Decisions.swift", "sourcecode.swift", (APP,)),
     ("CourseMate", "Assets.xcassets", "folder.assetcatalog", (APP,)),
     ("CourseMate", "Info.plist", "text.plist.xml", ()),
     ("CourseMate", "CourseMate.entitlements", "text.plist.entitlements", ()),
@@ -49,6 +50,7 @@ FILES = [
     ("CourseMateBroadcast", "CourseMateBroadcast.entitlements", "text.plist.entitlements", ()),
     ("Shared", "Settings.swift", "sourcecode.swift", (APP, EXT)),
     ("Shared", "CourseMateAPI.swift", "sourcecode.swift", (APP, EXT)),
+    ("Shared", "ControlChannel.swift", "sourcecode.swift", (APP, EXT)),
 ]
 
 PRODUCTS = [

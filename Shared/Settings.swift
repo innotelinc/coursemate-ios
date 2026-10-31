@@ -3,10 +3,10 @@
 //  Shared by the app and the broadcast extension.
 //
 //  A ReplayKit broadcast extension runs as its own process and cannot read the
-//  app's UserDefaults, so both targets read the same App Group container. When
-//  that capability is unavailable (a free Apple ID cannot use App Groups) the
-//  extension falls back to Info.plist keys, so it is never silently
-//  unconfigured.
+//  app's UserDefaults, so both targets read the same App Group container. The
+//  authoritative copy is the control file (see ControlChannel.swift) because
+//  the extension has to notice a session switch while it is running; UserDefaults
+//  and Info.plist remain as fallbacks so it is never silently unconfigured.
 //
 import Foundation
 
@@ -44,25 +44,52 @@ struct CMSettings: Equatable {
     static let empty = CMSettings(server: "", token: "", sessionID: "", course: "")
 
     static func load() -> CMSettings {
-        CMSettings(
-            server: AppGroup.string(CMKey.server) ?? "",
-            token: AppGroup.string(CMKey.token) ?? "",
-            sessionID: AppGroup.string(CMKey.session) ?? "",
-            course: AppGroup.string(CMKey.course) ?? ""
+        let control = ControlChannel.readControl()
+
+        func pick(_ preferred: String?, _ key: String) -> String {
+            if let preferred, !preferred.isEmpty { return preferred }
+            return AppGroup.string(key) ?? ""
+        }
+
+        return CMSettings(
+            server: pick(control?.server, CMKey.server),
+            // A cleared token is meaningful, so only fall back when there is no
+            // control file at all rather than when the field is empty.
+            token: control.map(\.token) ?? AppGroup.string(CMKey.token) ?? "",
+            sessionID: pick(control?.session, CMKey.session),
+            course: pick(control?.course, CMKey.course)
         )
+    }
+
+    /// The revision the extension last saw; the app only needs to beat it.
+    static func currentRevision() -> Int {
+        ControlChannel.readControl()?.revision ?? 0
     }
 
     /// Writes through to the App Group when it exists; returns whether anything
     /// was persisted, so the UI can say "this will not reach the extension"
-    /// instead of assuming success.
+    /// instead of assuming success. The revision must increase for the
+    /// extension to treat this as a change.
     @discardableResult
-    func save() -> Bool {
+    func save(revision: Int) -> Bool {
         guard let defaults = AppGroup.defaults else { return false }
+
+        // Kept for the Control Centre path and for `defaults read` debugging;
+        // the extension itself reads the control file.
         defaults.set(Self.normalize(server), forKey: CMKey.server)
         defaults.set(token, forKey: CMKey.token)
         defaults.set(sessionID, forKey: CMKey.session)
         defaults.set(course, forKey: CMKey.course)
-        return true
+
+        return ControlChannel.writeControl(
+            CMControlPayload(
+                server: Self.normalize(server),
+                token: token,
+                session: sessionID,
+                course: course,
+                revision: revision
+            )
+        )
     }
 
     /// Accepts "192.168.1.20:8790", "http://host/" and friends, and always

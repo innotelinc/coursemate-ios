@@ -1,0 +1,91 @@
+name: ios-build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ios-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build (${{ matrix.configuration }})
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphonesimulator --show-sdk-version
+
+      # The .xcodeproj is generated from tools/gen-project.py, so a hand-edited
+      # or stale project is a failure, not a cosmetic diff.
+      - name: Project file matches its generator
+        run: |
+          python3 tools/gen-project.py
+          if ! git diff --quiet -- CourseMate.xcodeproj; then
+            echo "::error::CourseMate.xcodeproj is out of date — run 'python3 tools/gen-project.py' and commit the result."
+            git --no-pager diff --stat -- CourseMate.xcodeproj
+            exit 1
+          fi
+
+      - name: Validate plists and entitlements
+        run: |
+          set -euo pipefail
+          for f in CourseMate/Info.plist CourseMateBroadcast/Info.plist \
+                   CourseMate/CourseMate.entitlements CourseMateBroadcast/CourseMateBroadcast.entitlements; do
+            plutil -lint "$f"
+          done
+
+      - name: Validate asset catalogs
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, pathlib, sys
+          bad = []
+          for path in pathlib.Path("CourseMate").rglob("Contents.json"):
+              try:
+                  json.loads(path.read_text())
+              except Exception as exc:
+                  bad.append(f"{path}: {exc}")
+          if bad:
+              print("\n".join(bad), file=sys.stderr)
+              sys.exit(1)
+          print("asset catalogs parse")
+          PY
+
+      # Unsigned on purpose: CI must not need a certificate or provisioning
+      # profile, and the simulator SDK links the extension without one. This
+      # proves the project graph and the Swift compile, nothing about signing.
+      - name: Build ${{ matrix.configuration }} (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project CourseMate.xcodeproj \
+            -scheme CourseMate \
+            -configuration ${{ matrix.configuration }} \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            build 2>&1 | tail -n 250
+
+      - name: Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ matrix.configuration }}
+          path: build/Logs/Build
+          if-no-files-found: ignore
+          retention-days: 7

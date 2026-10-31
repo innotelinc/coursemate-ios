@@ -18,6 +18,7 @@ struct ContentView: View {
             Form {
                 sessionSection
                 broadcastSection
+                deskSection
                 serverSection
 
                 if let notice = model.notice {
@@ -37,6 +38,14 @@ struct ContentView: View {
             .sheet(isPresented: $showSettings) {
                 SettingsView()
                     .environmentObject(model)
+            }
+            // Restarts when the session changes, and stops when the view does;
+            // the broadcast itself keeps running either way.
+            .task(id: model.sessionID) {
+                while !Task.isCancelled {
+                    await model.refresh()
+                    try? await Task.sleep(nanoseconds: 3_000_000_000)
+                }
             }
         }
     }
@@ -121,6 +130,68 @@ struct ContentView: View {
 
             if let url = model.dashboardURL {
                 Link("Open dashboard", destination: url)
+            }
+        }
+    }
+
+    // MARK: - Answers
+
+    private var deskSection: some View {
+        Section {
+            extensionRow
+
+            if let error = model.deskError {
+                Text(error)
+                    .font(.footnote)
+                    .foregroundStyle(.orange)
+                    .textSelection(.enabled)
+            }
+
+            if model.decisions.isEmpty {
+                Text(
+                    model.sessionID.isEmpty
+                        ? "Start a session to see what the screen was read as."
+                        : "Nothing yet. The first decision appears after the screen changes while broadcasting."
+                )
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            } else {
+                ForEach(model.decisions) { decision in
+                    DecisionRow(decision: decision)
+                }
+            }
+        } header: {
+            HStack {
+                Text("Answers")
+                Spacer()
+                if !model.decisions.isEmpty {
+                    Text("\(model.decisions.count)")
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+            }
+        } footer: {
+            Text("Newest first, refreshed every few seconds. The broadcast keeps running while you read these; Copy puts the drafted answer on the clipboard.")
+        }
+    }
+
+    private var extensionRow: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(model.extensionIsFollowing ? Color.green : Color.orange)
+                    .frame(width: 7, height: 7)
+                Text(model.extensionIsFollowing ? "Extension is posting to this session" : "Extension not posting to this session")
+                    .font(.caption)
+            }
+            Text(model.extensionSummary)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            if let last = model.extensionStatus?.last_error, !last.isEmpty {
+                Text(last)
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                    .lineLimit(2)
             }
         }
     }

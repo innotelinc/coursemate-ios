@@ -50,6 +50,37 @@ enum CourseMateAPI {
         return data
     }
 
+    static func get(base: String, token: String, path: String, timeout: TimeInterval = 15) async throws -> Data {
+        guard let url = CMSettings.url(base + path) else { throw APIError.invalidURL }
+        var request = URLRequest(url: url, timeoutInterval: timeout)
+        request.httpMethod = "GET"
+        if !token.isEmpty {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw APIError.transport }
+        guard (200 ..< 300).contains(http.statusCode) else {
+            throw APIError.status(http.statusCode, String(decoding: data.prefix(400), as: UTF8.self))
+        }
+        return data
+    }
+
+    /// Recent decisions for one session, newest first. Shown in the app so an
+    /// answer can be read without leaving the broadcast or opening the dashboard.
+    static func desk(
+        base: String,
+        token: String,
+        session: String,
+        limit: Int = 20
+    ) async throws -> [CMDecision] {
+        let query = "/api/desk?session_id=\(session.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? session)&limit=\(limit)"
+        let data = try await get(base: base, token: token, path: query)
+        let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        let rows = object?["decisions"] as? [[String: Any]] ?? []
+        return rows.compactMap(DecisionDecoder.from)
+    }
+
     static func createSession(base: String, token: String, course: String) async throws -> String {
         let data = try await post(
             base: base,
