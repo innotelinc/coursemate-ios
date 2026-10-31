@@ -135,6 +135,22 @@ extension CourseMateAPI {
         return rows.compactMap(DecisionDecoder.from)
     }
 
+    /// One decision by id, for a tap on the Live Activity. Fetched rather than
+    /// searched for in the desk, because the card can name an answer that
+    /// belongs to a session this app no longer has selected — or to none yet,
+    /// on a cold launch straight into the sheet.
+    static func decision(base: String, token: String, id: String) async throws -> CMDecision {
+        let encoded = id.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? id
+        let data = try await get(base: base, token: token, path: "/api/decision?id=\(encoded)")
+        let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard let row = object?["decision"] as? [String: Any],
+              let decision = DecisionDecoder.from(row)
+        else {
+            throw APIError.malformed("the decision did not decode")
+        }
+        return decision
+    }
+
     /// Feeds the correction loop: a wrong answer with the right one attached
     /// becomes a lesson immediately, without waiting for a reflection pass.
     static func correct(
@@ -283,6 +299,105 @@ struct DecisionRow: View {
             Button("Cancel", role: .cancel) { truth = "" }
         } message: {
             Text("It becomes a lesson the agent applies on later screens. Leaving it blank still records the correction.")
+        }
+    }
+}
+
+// MARK: - One answer, opened
+
+/// What a tap on the Live Activity shows: everything the row elides behind
+/// line limits, and the same grading, so "check this one" can be acted on
+/// where it lands rather than after a hunt through the list.
+struct DecisionDetailView: View {
+    let decision: CMDecision
+
+    @EnvironmentObject private var model: AppModel
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var copied = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    LabeledContent("Kind", value: decision.kindLabel)
+                    LabeledContent("Confidence", value: decision.confidenceLabel)
+                    if !decision.screenType.isEmpty {
+                        LabeledContent("Screen", value: decision.screenType)
+                    }
+                    LabeledContent("Read", value: decision.ts.formatted(date: .abbreviated, time: .shortened))
+                }
+
+                if !decision.headline.isEmpty {
+                    Section("Prompt") {
+                        Text(decision.headline)
+                            .textSelection(.enabled)
+                    }
+                }
+
+                if !decision.answer.isEmpty {
+                    Section("Answer") {
+                        Text(decision.answer)
+                            .textSelection(.enabled)
+
+                        Button(copied ? "Copied" : "Copy answer") {
+                            UIPasteboard.general.string = decision.answer
+                            copied = true
+                        }
+                    }
+                }
+
+                if !decision.options.isEmpty {
+                    Section("Options") {
+                        ForEach(Array(decision.options.enumerated()), id: \.offset) { index, label in
+                            HStack {
+                                Text(label)
+                                Spacer()
+                                if index == decision.chosenIndex {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(.tint)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if !decision.work.isEmpty {
+                    Section("Working") {
+                        Text(decision.work)
+                            .font(.callout)
+                            .textSelection(.enabled)
+                    }
+                }
+
+                if !decision.evidence.isEmpty {
+                    Section("Evidence") {
+                        Text(decision.evidence)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Section {
+                    DecisionRow(
+                        decision: decision,
+                        graded: model.graded[decision.id],
+                        grading: model.grading.contains(decision.id),
+                        onGrade: { correct, truth in
+                            model.grade(decision, correct: correct, truth: truth)
+                        }
+                    )
+                } footer: {
+                    Text("Right or Wrong teaches the agent; a wrong answer with the right one attached becomes a lesson.")
+                }
+            }
+            .navigationTitle("Answer")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
         }
     }
 }

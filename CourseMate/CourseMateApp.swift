@@ -31,6 +31,9 @@ struct CourseMateApp: App {
                 .onReceive(NotificationCenter.default.publisher(for: PushRegistration.refreshNotification)) { _ in
                     Task { await model.refresh() }
                 }
+                // Tapping the answer card: the tap is a URL, so it is routed
+                // rather than duplicated as a separate presentation path.
+                .onOpenURL { model.handle($0) }
         }
         .onChange(of: scenePhase) { _, phase in
             // One request per backgrounding; the handler chains the next one.

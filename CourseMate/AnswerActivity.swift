@@ -27,6 +27,7 @@ final class AnswerActivity {
         guard isEnabled else { return }
 
         let state = AnswerActivityAttributes.ContentState(
+            decisionId: decision.id,
             kindLabel: decision.kindLabel,
             confidence: decision.confidence,
             headline: decision.headline,
@@ -39,11 +40,16 @@ final class AnswerActivity {
             staleDate: Date().addingTimeInterval(600)
         )
 
-        if let current {
-            Task { await current.update(content) }
+        // The card's own End button runs in this process too, so `current` can
+        // point at an activity that is already finished. Updating that returns
+        // false and leaves nothing on screen, so a dead card is replaced instead
+        // of being updated forever.
+        if let current, current.activityState == .active || current.activityState == .stale {
+            Task { _ = await current.update(content) }
             return
         }
 
+        current = nil
         do {
             current = try Activity.request(
                 attributes: AnswerActivityAttributes(course: course),

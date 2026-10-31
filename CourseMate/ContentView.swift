@@ -40,6 +40,12 @@ struct ContentView: View {
                 SettingsView()
                     .environmentObject(model)
             }
+            // A tap on the Live Activity lands here, so the answer is already
+            // open instead of waiting to be found in the list.
+            .sheet(item: $model.focusedDecision) { decision in
+                DecisionDetailView(decision: decision)
+                    .environmentObject(model)
+            }
             // Restarts when the session changes, and stops when the view does;
             // the broadcast itself keeps running either way.
             .task(id: model.sessionID) {

@@ -27,6 +27,9 @@ final class AppModel: ObservableObject {
     @Published private(set) var graded: [String: Bool] = [:]
     @Published private(set) var grading: Set<String> = []
 
+    /// Set by a tap on the Live Activity, which opens that answer as a sheet.
+    @Published var focusedDecision: CMDecision?
+
     /// Off until permission is granted; the toggle asks iOS for it.
     @Published private(set) var notifyHighConfidence: Bool
 
@@ -210,6 +213,40 @@ final class AppModel: ObservableObject {
             UserDefaults.standard.set(granted, forKey: Self.notifyKey)
             if !granted {
                 self.notice = "Notifications are not allowed for CourseMate. Enable them in iOS Settings."
+            }
+        }
+    }
+
+    // MARK: - Deep links
+
+    /// A tap on the answer card arrives as `coursemate://decision/<id>`.
+    /// Anything else is ignored rather than guessed at.
+    func handle(_ url: URL) {
+        guard url.scheme == "coursemate", url.host == "decision" else { return }
+        let id = url.pathComponents.last ?? ""
+        guard !id.isEmpty, id != "/" else { return }
+        openDecision(id)
+    }
+
+    /// The card can name a decision from before this app opened, or from a
+    /// session it no longer has selected, so an id not in `decisions` is fetched
+    /// rather than treated as stale.
+    func openDecision(_ id: String) {
+        if let known = decisions.first(where: { $0.id == id }) {
+            focusedDecision = known
+            return
+        }
+
+        let base = server
+        let bearer = token
+        Task {
+            do {
+                let decision = try await CourseMateAPI.decision(base: base, token: bearer, id: id)
+                await MainActor.run { self.focusedDecision = decision }
+            } catch {
+                await MainActor.run {
+                    self.notice = "Could not open that answer: \(error.localizedDescription)"
+                }
             }
         }
     }

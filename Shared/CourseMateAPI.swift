@@ -9,6 +9,7 @@ enum APIError: LocalizedError {
     case transport
     case status(Int, String)
     case noSessionID
+    case malformed(String)
 
     var errorDescription: String? {
         switch self {
@@ -21,6 +22,8 @@ enum APIError: LocalizedError {
             return trimmed.isEmpty ? "HTTP \(code)" : "HTTP \(code): \(trimmed)"
         case .noSessionID:
             return "The server answered without a session_id."
+        case let .malformed(what):
+            return "Unexpected response: \(what)."
         }
     }
 }
