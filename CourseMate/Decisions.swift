@@ -112,6 +112,26 @@ enum DecisionDecoder {
     }
 }
 
+// MARK: - Fetching
+
+// App target only: this file is where CMDecision lives, and the extension does
+// not need the desk at all, so it stays out of the shared API surface.
+extension CourseMateAPI {
+    /// Recent decisions for one session, newest first.
+    static func desk(
+        base: String,
+        token: String,
+        session: String,
+        limit: Int = 20
+    ) async throws -> [CMDecision] {
+        let encoded = session.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? session
+        let data = try await get(base: base, token: token, path: "/api/desk?session_id=\(encoded)&limit=\(limit)")
+        let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        let rows = object?["decisions"] as? [[String: Any]] ?? []
+        return rows.compactMap(DecisionDecoder.from)
+    }
+}
+
 // MARK: - Row
 
 struct DecisionRow: View {

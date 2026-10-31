@@ -6,6 +6,7 @@
 //  frame whose 8x8 average hash is within a couple of bits of the last one.
 //  A static slide therefore costs one call, not one per sample buffer.
 //
+import CoreMedia
 import CoreImage
 import UIKit
 

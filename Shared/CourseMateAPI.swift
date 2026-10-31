@@ -66,21 +66,6 @@ enum CourseMateAPI {
         return data
     }
 
-    /// Recent decisions for one session, newest first. Shown in the app so an
-    /// answer can be read without leaving the broadcast or opening the dashboard.
-    static func desk(
-        base: String,
-        token: String,
-        session: String,
-        limit: Int = 20
-    ) async throws -> [CMDecision] {
-        let query = "/api/desk?session_id=\(session.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? session)&limit=\(limit)"
-        let data = try await get(base: base, token: token, path: query)
-        let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        let rows = object?["decisions"] as? [[String: Any]] ?? []
-        return rows.compactMap(DecisionDecoder.from)
-    }
-
     static func createSession(base: String, token: String, course: String) async throws -> String {
         let data = try await post(
             base: base,
