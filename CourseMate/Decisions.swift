@@ -63,7 +63,11 @@ enum DecisionDecoder {
             case let text as String:
                 questionText = text
             case let object as [String: Any]:
-                questionText = (object["text"] as? String)
+                // The server's question object is {stem, kind, options} — see
+                // normaliseQuestion() in brain.js. "text" and "prompt" are kept
+                // only because an older payload shape used them.
+                questionText = (object["stem"] as? String)
+                    ?? (object["text"] as? String)
                     ?? (object["prompt"] as? String)
                     ?? ""
                 options = object["options"] as? [String] ?? []
