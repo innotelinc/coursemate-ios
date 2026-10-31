@@ -172,7 +172,7 @@ struct ReviewView: View {
                                 .font(.caption2.monospaced())
                                 .foregroundStyle(.secondary)
                             if let started = session.startedAt {
-                                Text(started, style: .abbreviated)
+                                Text(started.formatted(date: .abbreviated, time: .shortened))
                                     .font(.caption2)
                                     .foregroundStyle(.tertiary)
                             }
