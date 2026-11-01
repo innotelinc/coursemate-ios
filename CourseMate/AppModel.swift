@@ -45,7 +45,18 @@ final class AppModel: ObservableObject {
 
     init() {
         let stored = CMSettings.load()
-        server = stored.server.isEmpty ? "http://127.0.0.1:8790" : stored.server
+        // A fresh install is already pointed at the hosted server, so the only
+        // thing a buyer does is paste a key. A stored plain-HTTP address that is
+        // not on the local network is a leftover from before this default, and
+        // iOS refuses it under App Transport Security — replacing it turns a
+        // mystery error into a connection that works.
+        if stored.server.isEmpty {
+            server = CMSettings.defaultServer
+        } else if stored.server.hasPrefix("http://"), !CMSettings.isLocalHost(stored.server) {
+            server = CMSettings.defaultServer
+        } else {
+            server = stored.server
+        }
         token = stored.token
         course = stored.course
         sessionID = stored.sessionID

@@ -29,6 +29,15 @@
 		<key>RPBroadcastProcessMode</key>
 		<string>RPBroadcastProcessModeSampleBuffer</string>
 	</dict>
+	<!-- The extension uploads on its own, so it needs the same transport rule as
+	     the app: HTTPS to the hosted server, with a LAN exception for development.
+	     Without this an http:// endpoint failed here with "requires the use of a
+	     secure connection" while the app looked configured. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>CourseMate sends screen frames and lecture audio to the server on your network.</string>
 	<key>NSMicrophoneUsageDescription</key>

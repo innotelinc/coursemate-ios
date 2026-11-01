@@ -7,22 +7,34 @@ struct SettingsView: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.dismiss) private var dismiss
 
+    /// The server is fixed to the hosted endpoint unless the operator says
+    /// otherwise, because "which URL" is not a question a buyer can answer.
+    @State private var advanced = false
+
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("http://192.168.1.20:8790", text: $model.server)
-                        .keyboardType(.URL)
+                    LabeledContent("Server", value: model.server)
+
+                    SecureField("API key", text: $model.token)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
 
-                    SecureField("Bearer token (optional)", text: $model.token)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
+                    Link("Buy an API key", destination: Self.buyURL)
+
+                    Toggle("Use a different server", isOn: $advanced)
+
+                    if advanced {
+                        TextField("https://cm.innotel.tech", text: $model.server)
+                            .keyboardType(.URL)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                    }
                 } header: {
                     Text("Server")
                 } footer: {
-                    Text("The CourseMate server must bind a reachable interface: start it with COURSEMATE_HOST=0.0.0.0. A simulator can use 127.0.0.1; a phone cannot.")
+                    Text("CourseMate runs at cm.innotel.tech, so a purchase is the whole setup: buy a key, paste it above. A server on your own network still works — turn on the switch and enter its address, but iOS only permits plain HTTP there, never over the internet.")
                 }
 
                 Section("Course") {
@@ -68,4 +80,9 @@ struct SettingsView: View {
             }
         }
     }
+
+    /// Where a key is sold. Kept here rather than in the app model because it is
+    /// a piece of the settings screen, and it must stay a plain https link: a
+    /// deep link into the store would break the day the store's route changes.
+    private static let buyURL = URL(string: "https://coursemate.innotel.tech/")!
 }

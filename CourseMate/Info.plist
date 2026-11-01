@@ -49,10 +49,12 @@
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- HTTPS only. The hosted server is https://cm.innotel.tech and a plain
+	     Internet address is refused by iOS regardless, so the arbitrary-loads
+	     escape hatch only ever hid the real problem. The local-networking
+	     exception keeps a development server on your own LAN usable. -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>

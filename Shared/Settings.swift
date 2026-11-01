@@ -43,6 +43,10 @@ struct CMSettings: Equatable {
 
     static let empty = CMSettings(server: "", token: "", sessionID: "", course: "")
 
+    /// The hosted server. A fresh install needs no setup at all: this is the
+    /// endpoint, and buying a key is the only thing left to do.
+    static let defaultServer = "https://cm.innotel.tech"
+
     static func load() -> CMSettings {
         let control = ControlChannel.readControl()
 
@@ -99,10 +103,33 @@ struct CMSettings: Equatable {
         guard !value.isEmpty else { return "" }
         let lower = value.lowercased()
         if !lower.hasPrefix("http://") && !lower.hasPrefix("https://") {
-            value = "http://" + value
+            // A bare host is the hosted server unless it is clearly a machine on
+            // the LAN. Guessing http:// for anything else only produces an ATS
+            // error the buyer cannot act on.
+            value = (isLocalHost(value) ? "http://" : "https://") + value
         }
         while value.hasSuffix("/") { value.removeLast() }
         return value
+    }
+
+    /// True for loopback, `.local`, and the private IPv4 ranges — the addresses a
+    /// development server actually listens on.
+    static func isLocalHost(_ raw: String) -> Bool {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        let withoutScheme = trimmed
+            .replacingOccurrences(of: "http://", with: "")
+            .replacingOccurrences(of: "https://", with: "")
+        let host = withoutScheme.split(separator: "/").first.map(String.init) ?? ""
+        let name = host.split(separator: ":").first.map(String.init) ?? ""
+        if name.isEmpty { return false }
+        if name == "localhost" || name.hasSuffix(".local") { return true }
+        let parts = name.split(separator: ".")
+        guard parts.count == 4,
+              parts.allSatisfy({ Int($0).map { (0...255).contains($0) } ?? false })
+        else { return false }
+        let a = Int(parts[0]) ?? 0
+        let b = Int(parts[1]) ?? 0
+        return a == 10 || a == 127 || (a == 192 && b == 168) || (a == 172 && (16...31).contains(b))
     }
 
     static func url(_ raw: String) -> URL? {
