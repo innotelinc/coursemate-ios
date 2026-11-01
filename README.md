@@ -23,10 +23,10 @@ to the CourseMate server, which reads the screen and drafts the answer.
 [![TestFlight](https://img.shields.io/badge/release-testflight%20from%20CI-f5b95b)](docs/release.md)
 
 **Landing page:** [innotelinc.github.io/coursemate-ios](https://innotelinc.github.io/coursemate-ios/) ·
-**Server:** [coursemate](https://github.com/innotelinc/coursemate) ·
+**Server:** [coursemate.innotel.tech](https://coursemate.innotel.tech/) ·
 **Known limits:** [below](#known-limits)
 
-An **Innotel Labs** product · [innotel.us](https://innotel.us)
+An **Innotel Labs** product · [coursemate.innotel.tech](https://coursemate.innotel.tech/)
 
 </div>
 
