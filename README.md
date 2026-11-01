@@ -417,7 +417,7 @@ exercised on a device. Expect to fix signing identifiers on first open.
 ## License
 
 MIT — see [LICENSE](LICENSE). Copyright © 2026 Innotel Inc. An **Innotel Labs**
-product — [innotel.us](https://innotel.us). No vendored upstream code.
+product — [coursemate.innotel.tech](https://coursemate.innotel.tech/). No vendored upstream code.
 
 *CourseMate for iOS — every screen, every lecture, in one broadcast.*
 
