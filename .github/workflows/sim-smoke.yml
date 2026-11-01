@@ -1,0 +1,81 @@
+# Run the app in a simulator and photograph what it shows.
+#
+# CI already compiles for the simulator, which proves the Swift type-checks.
+# It never launches anything, so every question about what the app does once it
+# is running — does it boot, does the desk render, does it reach the server — has
+# only ever been answered by reading code. This boots a device, installs the
+# build, starts it, waits, and keeps a screenshot of the result.
+#
+# Unsigned on purpose, like the build job: no certificate, no profile, and the
+# simulator does not check either. Entitlements are therefore absent, so the App
+# Group reads as unprovisioned here — that is a property of this run, not of a
+# shipped build.
+
+name: sim-smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  launch:
+    runs-on: macos-15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build for the simulator
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project CourseMate.xcodeproj \
+            -scheme CourseMate \
+            -configuration Debug \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            build 2>&1 | tail -n 40
+
+      - name: Boot, install, launch
+        run: |
+          set -uo pipefail
+          xcrun simctl boot "iPhone 16" 2>/dev/null || true
+          xcrun simctl bootstatus "iPhone 16" -b
+
+          APP="build/Build/Products/Debug-iphonesimulator/CourseMate.app"
+          test -d "$APP" || { echo "::error::no app bundle at $APP"; exit 1; }
+
+          xcrun simctl install booted "$APP"
+          xcrun simctl launch booted us.innotel.coursemate
+
+          # Long enough for the first health request and the first desk poll, so
+          # the screenshot shows a connected app rather than a blank launch.
+          sleep 15
+
+          mkdir -p shots
+          xcrun simctl io booted screenshot shots/launch.png
+          ls -l shots
+
+      - name: Did it stay up
+        if: always()
+        run: |
+          set -uo pipefail
+          # A launch that returns a pid and then dies is the failure this catches.
+          echo "--- running processes"
+          xcrun simctl spawn booted launchctl list 2>/dev/null | grep -i coursemate || echo "not listed (may have exited)"
+          echo "--- app log"
+          xcrun simctl spawn booted log show --last 3m --style compact \
+            --predicate 'process == "CourseMate"' 2>/dev/null | tail -n 60 || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: simulator-launch
+          path: shots/
+          if-no-files-found: warn
+          retention-days: 7
