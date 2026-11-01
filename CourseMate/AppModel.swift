@@ -167,7 +167,12 @@ final class AppModel: ObservableObject {
     }
 
     func testServer() {
-        let base = server
+        // Normalised here, not only when saving: a stored plain-http address is
+        // exactly what App Transport Security refuses, and "Test connection" is
+        // where that refusal surfaces. An empty field means the hosted server.
+        let base = CMSettings.normalize(
+            server.isEmpty ? CMSettings.defaultServer : server
+        )
         let bearer = token
         health = "checking…"
         Task {
