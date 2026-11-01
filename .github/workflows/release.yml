@@ -93,6 +93,28 @@ jobs:
           echo "MARKETING_VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "BUILD_NUMBER=${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
 
+      # App Store Connect refuses the iOS 18.x SDK, so the toolchain is chosen
+      # explicitly and checked before the build: failing here costs a minute,
+      # failing at upload costs ten and says only "SDK version issue".
+      - name: Select the newest Xcode
+        run: |
+          set -euo pipefail
+          best=""; bestv=0
+          for app in /Applications/Xcode*.app; do
+            [ -d "$app" ] || continue
+            v=$("$app/Contents/Developer/usr/bin/xcodebuild" -version 2>/dev/null | head -1 | awk '{print $2}')
+            [ -z "$v" ] && continue
+            echo "found $app -> $v"
+            major=${v%%.*}
+            if [ "$major" -gt "$bestv" ]; then best="$app"; bestv=$major; fi
+          done
+          if [ "$bestv" -lt 26 ]; then
+            echo "::error::This image carries no Xcode 26; App Store Connect rejects the iOS 18.5 SDK. Move the job to a runner image that has Xcode 26."
+            exit 1
+          fi
+          sudo xcode-select -s "$best"
+          xcodebuild -version
+
       - name: Archive
         run: |
           set -o pipefail
