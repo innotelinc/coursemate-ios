@@ -14,3 +14,7 @@ xcuserdata/
 .symbols/
 timeline.xctimeline
 playground.xcworkspace
+
+# Secrets
+.env
+env.local

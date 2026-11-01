@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en" data-scheme="operations">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CourseMate for iOS — every screen, in one broadcast</title>
+  <meta name="description" content="A SwiftUI app and a ReplayKit broadcast extension that carry whatever you are looking at, plus its audio, to the CourseMate server — which reads the screen and drafts the answer.">
+  <meta property="og:title" content="CourseMate for iOS — every screen, in one broadcast">
+  <meta property="og:description" content="A SwiftUI app and a ReplayKit broadcast extension that carry whatever you are looking at, plus its audio, to the CourseMate server — which reads the screen and drafts the answer.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0d10'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle'%3E•%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="unity-theme.css">
+  <script>window.UNITY_DEFAULT_SCHEME = "operations";</script>
+  <script src="unity-theme.js"></script>
+  <style>:root {
+      --p-bg: var(--canvas);
+      --p-bg-elevated: var(--surface-muted);
+      --p-surface: var(--surface);
+      --p-surface-hover: var(--surface-sunken);
+      --p-border: var(--line);
+      --p-text: var(--ink);
+      --p-text-secondary: var(--ink-soft);
+      --p-text-muted: var(--ink-faint);
+      --p-accent: var(--brand);
+      --p-accent-hover: var(--brand-ring);
+      --p-accent-tint: var(--brand-soft);
+      --p-gold: var(--attention);
+      --p-success: var(--ok);
+      --radius-md: var(--radius);
+      --ease: cubic-bezier(.2, .8, .2, 1);
+    }
+
+    
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; background: var(--p-bg); color: var(--p-text);
+      font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+    }
+    ::selection { background: var(--p-accent-tint); }
+    a { color: var(--p-accent); text-decoration: none; }
+    a:hover { color: var(--p-accent-hover); }
+    code, pre { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+    .topbar { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--canvas) 72%, transparent); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-bottom: 1px solid var(--p-border); }
+    .topbar-inner { display: flex; align-items: center; gap: 20px; height: 60px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 650; letter-spacing: 0.04em; color: var(--p-text); }
+    .brand:hover { color: var(--p-text); }
+    .brand .mark { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: var(--p-bg-elevated); border: 1px solid var(--p-border); font-size: 15px; }
+    .brand .dot { color: var(--p-accent); }
+    .topbar nav { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+    .topbar nav a { color: var(--p-text-secondary); padding: 6px 12px; border-radius: var(--radius-sm); font-size: 14px; transition: color .15s var(--ease), background .15s var(--ease); }
+    .topbar nav a:hover { color: var(--p-text); background: var(--p-surface-hover); }
+    .topbar .gh { display: inline-flex; align-items: center; gap: 8px; margin-left: 8px; border: 1px solid var(--p-border); border-radius: var(--radius-md); padding: 7px 14px; color: var(--p-text); font-size: 14px; transition: border-color .15s var(--ease), background .15s var(--ease); }
+    .topbar .gh:hover { border-color: var(--p-accent); background: var(--p-accent-tint); color: var(--p-text); }
+
+    .hero { position: relative; overflow: hidden; padding: 96px 0 72px; }
+    .hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(600px 320px at 70% -10%, color-mix(in srgb, var(--brand) 14%, transparent), transparent 70%), radial-gradient(500px 300px at 15% 110%, color-mix(in srgb, var(--attention) 6%, transparent), transparent 70%); pointer-events: none; }
+    .hero-inner { position: relative; max-width: 760px; }
+    .kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-accent-hover); background: var(--p-accent-tint); border: 1px solid color-mix(in srgb, var(--brand) 30%, transparent); border-radius: 999px; padding: 5px 14px; margin: 0 0 24px; }
+    .kicker .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--p-success); box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 50%, transparent); animation: pulse 2.4s var(--ease) infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 45%, transparent); } 70% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--ok) 0%, transparent); } 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 0%, transparent); } }
+    h1 { font-size: clamp(2.2rem, 5.5vw, 3.4rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 20px; font-weight: 700; }
+    h1 .accent { color: var(--p-accent); }
+    .lede { font-size: 1.125rem; color: var(--p-text-secondary); max-width: 660px; margin: 0 0 32px; }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 28px; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; border-radius: var(--radius-md); padding: 11px 20px; font-size: 15px; font-weight: 550; border: 1px solid transparent; cursor: pointer; transition: background .15s var(--ease), border-color .15s var(--ease); }
+    .btn-primary { background: var(--p-accent); color: var(--brand-ink); font-weight: 600; }
+    .btn-primary:hover { background: var(--p-accent-hover); color: var(--brand-ink); }
+    .btn-secondary { border-color: var(--p-border); color: var(--p-text); background: transparent; }
+    .btn-secondary:hover { border-color: var(--p-accent); background: var(--p-accent-tint); color: var(--p-text); }
+    .quickstart { display: flex; align-items: center; gap: 14px; background: var(--p-bg-elevated); border: 1px solid var(--p-border); border-radius: var(--radius-md); padding: 12px 16px; max-width: 680px; font-size: 13.5px; }
+    .quickstart code { color: var(--p-text); white-space: nowrap; overflow-x: auto; }
+    .quickstart code .c { color: var(--p-text-muted); }
+    .quickstart .copy { margin-left: auto; flex: 0 0 auto; background: transparent; border: 1px solid var(--p-border); color: var(--p-text-secondary); border-radius: var(--radius-sm); font: inherit; font-size: 12px; padding: 4px 10px; cursor: pointer; transition: border-color .15s var(--ease), color .15s var(--ease); }
+    .quickstart .copy:hover { border-color: var(--p-accent); color: var(--p-text); }
+    .quickstart .copy.copied { color: var(--p-success); border-color: var(--p-success); }
+
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 56px 0 0; }
+    .stat { background: var(--p-bg-elevated); border: 1px solid var(--p-border); border-radius: var(--radius-md); padding: 16px; }
+    .stat .n { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
+    .stat .n em { font-style: normal; color: var(--p-accent); }
+    .stat .l { font-size: 13px; color: var(--p-text-muted); margin-top: 2px; }
+
+    section { padding: 64px 0; }
+    .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 28px; }
+    .sec-head h2 { font-size: 1.6rem; letter-spacing: -0.02em; margin: 0; }
+    .sec-head p { color: var(--p-text-muted); margin: 0; font-size: 14.5px; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <div class="topbar-inner">
+        <a class="brand" href="/"><span class="mark">•</span><span>coursemate-ios</span></a>
+        <nav>
+          <a href="https://github.com/innotelinc/coursemate-ios">Source</a>
+          <a class="gh" href="https://github.com/innotelinc/coursemate-ios">GitHub ↗</a>
+        </nav>
+        <div class="ot-theme" role="group" aria-label="Colour theme" data-unity-switch><button type="button" data-theme-mode="system" aria-pressed="false">System</button><button type="button" data-theme-mode="light" aria-pressed="false">Light</button><button type="button" data-theme-mode="dark" aria-pressed="false">Dark</button></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="kicker"><span class="pulse"></span> iOS 17+ · ReplayKit · TestFlight</div>
+        <h1>CourseMate for iOS — <span class="accent">every screen, one broadcast.</span></h1>
+        <p class="lede">iOS will not let an app read another app's screen. A broadcast extension will: start it once and it keeps receiving frames and audio while you use your course in any other app. The answer arrives on the Lock Screen, tappable through to the full card.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/innotelinc/coursemate-ios">View on GitHub</a>
+          <a class="btn btn-secondary" href="https://github.com/innotelinc/coursemate-ios/releases">Release notes</a>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding:8px 0 28px;">
+      <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px;">
+      <div style="padding:20px; border:1px solid var(--p-border); border-radius:var(--radius-md); background:var(--p-surface);"><h3 style="margin:0 0 6px; font-size:1.02rem;">iOS forbids reading another app's screen</h3><p style="margin:0; color:var(--p-text-secondary); font-size:14px;">A ReplayKit broadcast extension is the one supported route, and it keeps running while the course app is in front.</p></div>
+      <div style="padding:20px; border:1px solid var(--p-border); border-radius:var(--radius-md); background:var(--p-surface);"><h3 style="margin:0 0 6px; font-size:1.02rem;">A frame a second would drown the server</h3><p style="margin:0; color:var(--p-text-secondary); font-size:14px;">A perceptual hash skips unchanged screens; only a real change is uploaded, at most every 2.5 seconds.</p></div>
+      <div style="padding:20px; border:1px solid var(--p-border); border-radius:var(--radius-md); background:var(--p-surface);"><h3 style="margin:0 0 6px; font-size:1.02rem;">The answer arrives behind the course app</h3><p style="margin:0; color:var(--p-text-secondary); font-size:14px;">A Live Activity puts it in the Dynamic Island and on the Lock Screen, and the tap opens that exact answer.</p></div>
+      </div>
+    </section>
+
+    <section style="padding:8px 0 28px;">
+      <h2 style="font-size:1.2rem; margin:0 0 14px;">What it does</h2>
+      <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px;">
+      <div style="padding:20px; border:1px solid var(--p-border); border-radius:var(--radius-md); background:var(--p-surface);"><h3 style="margin:0 0 6px; font-size:1.02rem;">Capture</h3><p style="margin:0; color:var(--p-text-secondary); font-size:14px;">Frames throttled and hashed, audio chunked to 16-bit mono WAV.</p></div>
+      <div style="padding:20px; border:1px solid var(--p-border); border-radius:var(--radius-md); background:var(--p-surface);"><h3 style="margin:0 0 6px; font-size:1.02rem;">Live Activity</h3><p style="margin:0; color:var(--p-text-secondary); font-size:14px;">One card per session, updated in place, never stacked.</p></div>
+      <div style="padding:20px; border:1px solid var(--p-border); border-radius:var(--radius-md); background:var(--p-surface);"><h3 style="margin:0 0 6px; font-size:1.02rem;">Review</h3><p style="margin:0; color:var(--p-text-secondary); font-size:14px;">Every decision graded from the phone; a correction becomes a lesson.</p></div>
+      <div style="padding:20px; border:1px solid var(--p-border); border-radius:var(--radius-md); background:var(--p-surface);"><h3 style="margin:0 0 6px; font-size:1.02rem;">Release</h3><p style="margin:0; color:var(--p-text-secondary); font-size:14px;">A tag builds, signs and uploads to TestFlight from CI.</p></div>
+      </div>
+    </section>
+
+    <section style="padding:8px 0 28px;">
+      <h2 style="font-size:1.2rem; margin:0 0 14px;">Quick start</h2>
+      <div style="display:grid; gap:10px;">
+        <div style="padding:14px 16px; border:1px solid var(--p-border); border-radius:var(--radius-sm); background:var(--p-bg-elevated); font-family:ui-monospace,monospace; font-size:13px;"><span style="color:var(--p-text-muted);">1</span> python3 tools/gen-project.py<br><span style="color:var(--p-text-muted);"> </span> # the project is generated</div>
+<div style="padding:14px 16px; border:1px solid var(--p-border); border-radius:var(--radius-sm); background:var(--p-bg-elevated); font-family:ui-monospace,monospace; font-size:13px;"><span style="color:var(--p-text-muted);">2</span> open CourseMate.xcodeproj<br><span style="color:var(--p-text-muted);"> </span> # then ⌘R on a device</div>
+<div style="padding:14px 16px; border:1px solid var(--p-border); border-radius:var(--radius-sm); background:var(--p-bg-elevated); font-family:ui-monospace,monospace; font-size:13px;"><span style="color:var(--p-text-muted);">3</span> git tag v1.0.0 && git push origin v1.0.0<br><span style="color:var(--p-text-muted);"> </span> # TestFlight, via the App Store Connect key</div>
+      </div>
+    </section>
+
+    <section style="padding:8px 0 40px;">
+      <p style="color:var(--p-text-secondary); font-size:14px; max-width:70ch;">Push needs an APNs key and the Push Notifications capability; an App Store Connect key signs releases and cannot deliver a notification. That distinction is in docs/release.md.</p>
+      <p style="color:var(--p-text-muted); font-size:13px;">
+        Part of the <a href="https://github.com/innotelinc/innotel-platform-stack">Innotel Platform Stack</a>
+        · <a href="https://github.com/innotelinc/coursemate-ios/blob/main/docs/stack.md">docs/stack.md</a>
+        · MIT
+      </p>
+    </section>
+  </div>
+  <script>(function(){
+  var api=window.UnityTheme||window.OntrakTheme;if(!api)return;
+  function paint(){var now=api.mode();var all=document.querySelectorAll('[data-theme-mode]');
+    for(var i=0;i<all.length;i++){all[i].setAttribute('aria-pressed',String(all[i].getAttribute('data-theme-mode')===now));}}
+  var buttons=document.querySelectorAll('[data-theme-mode]');
+  for(var i=0;i<buttons.length;i++){buttons[i].addEventListener('click',function(){api.setMode(this.getAttribute('data-theme-mode'));});}
+  window.addEventListener('unity:theme',paint);window.addEventListener('ontrak:theme',paint);paint();
+})();</script>
+</body>
+</html>
