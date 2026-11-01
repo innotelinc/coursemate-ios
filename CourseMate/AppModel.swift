@@ -68,7 +68,9 @@ final class AppModel: ObservableObject {
         CMSettings(server: server, token: token, sessionID: sessionID, course: course)
     }
 
-    var dashboardURL: URL? { CMSettings.url(server) }
+    /// The root of the server is the landing page now; the desk the app opens
+    /// lives one segment along.
+    var dashboardURL: URL? { CMSettings.url(server + "/desk") }
 
     var appGroupNote: String {
         AppGroup.isAvailable
