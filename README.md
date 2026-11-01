@@ -149,10 +149,18 @@ Registration is wired end to end and **off by default**, because delivering it
 needs an Apple provider key:
 
 1. Enable the Push Notifications capability on the app id and both extensions.
-2. Put `AuthKey_XXXX.p8` somewhere the server can read.
-3. Set on the server: `COURSEMATE_PUSH=1`, `APNS_KEY_PATH`, `APNS_KEY_ID`,
-   `APNS_TEAM_ID`, and `APNS_TOPIC` (the app's bundle id). Use
+2. Create an **APNs** key — not an App Store Connect key; see
+   `docs/release.md` for why those are different and why the one used for
+   releases cannot send a notification.
+3. Set on the server: `COURSEMATE_PUSH=1`, `APNS_KEY_ID`, `APNS_TEAM_ID`,
+   `APNS_TOPIC` (the app's bundle id), and the key itself as either `APNS_KEY`
+   (the `.p8` contents, PEM or base64 — the form that works on a deployed host)
+   or `APNS_KEY_PATH` (a file, for a laptop). Use
    `APNS_ENVIRONMENT=production` for TestFlight and the App Store.
+
+`GET /api/health` names what is missing under `push.missing` and where the key
+was found under `push.key_source`, because a switch, a key id and a team id with
+no key is the state that sends nothing and raises no error.
 
 The app registers at launch, posts its 64-hex token to `POST /api/devices`, and
 the server pushes decisions that are not `needs_human` and score at least
@@ -249,6 +257,8 @@ defensively, so an unrecognised kind still renders its label and confidence.
 | `Shared/CourseMateAPI.swift` | the HTTP calls, shared by both targets |
 | `tools/gen-project.py` | regenerates the Xcode project and scheme |
 | `.github/workflows/ios-build.yml` | CI: project drift check, lint, unsigned build |
+| `.github/workflows/release.yml` | tag `v*` → sign, archive, TestFlight, GitHub release |
+| `docs/release.md` | the App Store Connect key, and why it is not an APNs key |
 
 The project file is generated, because two targets sharing five sources makes
 it painful to maintain by hand. After adding a file:
