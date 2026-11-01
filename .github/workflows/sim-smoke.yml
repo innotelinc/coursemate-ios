@@ -33,7 +33,7 @@ jobs:
             -project CourseMate.xcodeproj \
             -scheme CourseMate \
             -configuration Debug \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
@@ -44,32 +44,46 @@ jobs:
       - name: Boot, install, launch
         run: |
           set -uo pipefail
-          xcrun simctl boot "iPhone 16" 2>/dev/null || true
-          xcrun simctl bootstatus "iPhone 16" -b
+
+          echo "--- simulators this image actually provides"
+          xcrun simctl list devices available | sed -n '/-- iOS/,/^--/p' | head -n 20
+
+          # Resolve the first available iPhone rather than naming one: the image
+          # decides which models exist, and a name that is missing fails the job
+          # before anything has been tested.
+          DEVICE=$(xcrun simctl list devices available -j \
+            | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(dev["udid"] for rt in sorted(d) for dev in d[rt] if "iPhone" in dev["name"]))')
+          echo "device: $DEVICE"
+          test -n "$DEVICE" || { echo "::error::no iPhone simulator on this runner"; exit 1; }
 
           APP="build/Build/Products/Debug-iphonesimulator/CourseMate.app"
           test -d "$APP" || { echo "::error::no app bundle at $APP"; exit 1; }
 
-          xcrun simctl install booted "$APP"
-          xcrun simctl launch booted us.innotel.coursemate
+          xcrun simctl boot "$DEVICE" 2>/dev/null || true
+          xcrun simctl bootstatus "$DEVICE" -b
+
+          xcrun simctl install "$DEVICE" "$APP"
+          xcrun simctl launch "$DEVICE" us.innotel.coursemate
 
           # Long enough for the first health request and the first desk poll, so
           # the screenshot shows a connected app rather than a blank launch.
           sleep 15
 
           mkdir -p shots
-          xcrun simctl io booted screenshot shots/launch.png
+          xcrun simctl io "$DEVICE" screenshot shots/launch.png
           ls -l shots
+          echo "$DEVICE" > shots/device.txt
 
       - name: Did it stay up
         if: always()
         run: |
           set -uo pipefail
           # A launch that returns a pid and then dies is the failure this catches.
-          echo "--- running processes"
-          xcrun simctl spawn booted launchctl list 2>/dev/null | grep -i coursemate || echo "not listed (may have exited)"
+          DEVICE=$(cat shots/device.txt 2>/dev/null || echo booted)
+          echo "--- running processes on $DEVICE"
+          xcrun simctl spawn "$DEVICE" launchctl list 2>/dev/null | grep -i coursemate || echo "not listed (may have exited)"
           echo "--- app log"
-          xcrun simctl spawn booted log show --last 3m --style compact \
+          xcrun simctl spawn "${DEVICE:-booted}" log show --last 3m --style compact \
             --predicate 'process == "CourseMate"' 2>/dev/null | tail -n 60 || true
 
       - uses: actions/upload-artifact@v4
