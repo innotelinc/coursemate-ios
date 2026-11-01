@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="CourseMate/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png" width="96" alt="CourseMate app icon">
+<img src="docs/icon.png" width="96" alt="CourseMate app icon">
 
 # CourseMate for iOS
 
@@ -25,6 +25,8 @@ to the CourseMate server, which reads the screen and drafts the answer.
 **Landing page:** [innotelinc.github.io/coursemate-ios](https://innotelinc.github.io/coursemate-ios/) ·
 **Server:** [coursemate](https://github.com/innotelinc/coursemate) ·
 **Known limits:** [below](#known-limits)
+
+An **Innotel Labs** product · [innotel.us](https://innotel.us)
 
 </div>
 
@@ -414,7 +416,8 @@ exercised on a device. Expect to fix signing identifiers on first open.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Copyright © 2026 Innotel Inc. No vendored upstream code.
+MIT — see [LICENSE](LICENSE). Copyright © 2026 Innotel Inc. An **Innotel Labs**
+product — [innotel.us](https://innotel.us). No vendored upstream code.
 
 *CourseMate for iOS — every screen, every lecture, in one broadcast.*
 
