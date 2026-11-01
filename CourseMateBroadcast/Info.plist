@@ -33,12 +33,16 @@
 	<string>CourseMate sends screen frames and lecture audio to the server on your network.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>CourseMate records lecture audio together with your screen so it can transcribe what was said.</string>
-	<!-- Fallback for a free Apple ID, where the App Group container cannot be
-	     provisioned. Uncomment these two keys, set your server and session, and
-	     rebuild the extension. Values in the App Group take precedence. -->
-	<!--
+	<!-- The extension's own copy of the endpoint, so a broadcast works before
+	     the app has ever written to the App Group. Values in the App Group (and
+	     the control file) take precedence over these at runtime. -->
 	<key>cm_url</key>
-	<string>http://192.168.1.20:8790</string>
+	<string>https://cm.innotel.tech</string>
+	<key>cm_token</key>
+	<string></string>
+	<!-- Fallback for a free Apple ID, where the App Group container cannot be
+	     provisioned: set a server and session here, and rebuild the extension. -->
+	<!--
 	<key>cm_session</key>
 	<string>ses_...</string>
 	-->

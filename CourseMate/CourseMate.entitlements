@@ -2,6 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- `development` here is what a signed App Store profile replaces with
+	     `production` at codesign time; hardcoding production would break debug
+	     builds from Xcode. Requires Push Notifications on the App ID. -->
+	<key>aps-environment</key>
+	<string>development</string>
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.us.innotel.coursemate</string>

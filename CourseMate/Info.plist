@@ -22,6 +22,15 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<!-- The deployed server, so a fresh install connects without being set up.
+	     `Settings.swift` reads these through `AppGroup.string`, which checks the
+	     App Group container first: anything typed in Settings still wins.
+	     The URL is public and committed; the token is written into the bundle by
+	     the release workflow from a repository secret, so it is never in git. -->
+	<key>cm_url</key>
+	<string>https://cm.innotel.tech</string>
+	<key>cm_token</key>
+	<string></string>
 	<!-- A tap on the answer card opens `coursemate://decision/<id>`. -->
 	<key>CFBundleURLTypes</key>
 	<array>
