@@ -95,3 +95,35 @@ TestFlight build that is not a tagged release.
 | `entity_not_found` / 401 at upload | `APP_STORE_CONNECT_KEY_ID` and the key file disagree |
 | `Invalid Provisioning Profile` for the broadcast extension | the extension's app id needs App Groups, which `CourseMateBroadcast.entitlements` requires |
 | upload succeeds, nothing in TestFlight | export compliance: the build waits until answered |
+
+## The App IDs this project actually needs
+
+Four bundle identifiers are built; only three are App IDs, and exactly one is an
+App Store listing. Extensions are not separate apps — they ship inside
+CourseMate and appear in the store as CourseMate.
+
+| Bundle ID | Target | Product type | App ID? | Capabilities |
+| --- | --- | --- | --- | --- |
+| `us.innotel.coursemate` | CourseMate | application | **yes** | App Groups; Push Notifications only if push is enabled |
+| `us.innotel.coursemate.broadcast` | CourseMateBroadcast | app-extension | **yes** | App Groups |
+| `us.innotel.coursemate.widget` | CourseMateWidget | app-extension | **yes** | none — it declares no entitlements |
+| `us.innotel.coursemate.tests` | CourseMateTests | unit-test bundle | no | never signed for distribution |
+
+`group.us.innotel.coursemate` is a fourth, separate thing: a team-level
+**App Group**, registered once in Identifiers → App Groups. It is shared by the
+app and the broadcast extension, which is how the two processes see the same
+session file — that is the whole reason the entitlement exists.
+
+Automatic signing registers missing App IDs on demand, so a fresh team usually
+ends up with the child App IDs before anyone creates them by hand. The App Group
+is the exception: it is a portal resource Xcode only attaches to, so it has to
+exist first. Enabling it on an App ID is a checkbox, and it invalidates that App
+ID's existing profiles — CI reissues them on the next run.
+
+Two error signatures are worth telling apart:
+
+- `Provisioning profile "…" doesn't match the entitlements file's value for the
+  com.apple.security.application-groups entitlement` — the App Group is not
+  enabled on that App ID. This is the one a first release hits.
+- `No profiles for 'us.innotel.coursemate' were found` — the App ID exists under
+  a different team than `APPLE_TEAM_ID`.
