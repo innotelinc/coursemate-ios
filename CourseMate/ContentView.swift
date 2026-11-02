@@ -11,6 +11,7 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject private var model: AppModel
     @EnvironmentObject private var launcher: BroadcastLauncher
+    @Environment(\.openURL) private var openURL
     @State private var showSettings = false
 
     var body: some View {
@@ -63,7 +64,7 @@ struct ContentView: View {
                 .textInputAutocapitalization(.words)
 
             if model.sessionID.isEmpty {
-                Text("No session yet — the extension needs one before it can send frames.")
+                Text("No session yet — open the console to start one for this lecture.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             } else {
@@ -75,19 +76,30 @@ struct ContentView: View {
             }
 
             Button {
-                model.createSession()
+                openConsole()
             } label: {
                 if model.busy {
                     ProgressView()
                 } else {
-                    Text(model.sessionID.isEmpty ? "Start new session" : "Replace session")
+                    Text("Open console")
                 }
             }
             .disabled(model.busy)
         } header: {
             Text("Course")
         } footer: {
-            Text("A session groups observations, transcripts and decisions under one course.")
+            // The rule the extension depends on, in the words a student needs:
+            // nothing is created at launch, and nothing from a previous launch
+            // is reused. Opening the console is the only way to get a session.
+            Text("Opening the console starts a session then and there. A session from a previous run is never reused — that is what keeps the broadcast inside the console you are looking at.")
+        }
+    }
+
+    /// Asks the model for this run's session (creating it the first time) and
+    /// opens the desk with it.
+    private func openConsole() {
+        Task {
+            if let url = await model.openConsole() { openURL(url) }
         }
     }
 
@@ -150,9 +162,11 @@ struct ContentView: View {
                     .textSelection(.enabled)
             }
 
-            if let url = model.dashboardURL {
-                Link("Open dashboard", destination: url)
-            }
+            // The console is the session's home, so it is a button rather than
+            // a plain link: a link could open the desk with no session behind
+            // it, which is a console that cannot show anything.
+            Button("Open console") { openConsole() }
+                .disabled(model.busy)
         }
     }
 
@@ -179,7 +193,7 @@ struct ContentView: View {
             if model.decisions.isEmpty {
                 Text(
                     model.sessionID.isEmpty
-                        ? "Start a session to see what the screen was read as."
+                        ? "Open the console to start a session, then broadcast."
                         : "Nothing yet. The first decision appears after the screen changes while broadcasting."
                 )
                 .font(.footnote)

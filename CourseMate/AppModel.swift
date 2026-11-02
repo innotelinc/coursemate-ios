@@ -59,8 +59,15 @@ final class AppModel: ObservableObject {
         }
         token = stored.token
         course = stored.course
-        sessionID = stored.sessionID
-        revision = CMSettings.currentRevision()
+        // A session belongs to one console, not to the install. Adopting
+        // `stored.sessionID` here is what had the broadcast extension posting
+        // into a session from a previous run, so it is discarded: the only way
+        // to get one is to open the console (see `openConsole`). Writing the
+        // cleared value out — with a bumped revision — also stops a broadcast
+        // that is still running instead of letting it keep sending.
+        sessionID = ""
+        revision = CMSettings.currentRevision() + 1
+        CMSettings.clearStoredSession(revision: revision)
         notifyHighConfidence = UserDefaults.standard.bool(forKey: Self.notifyKey)
     }
 
@@ -72,10 +79,16 @@ final class AppModel: ObservableObject {
     /// lives one segment along.
     var dashboardURL: URL? { CMSettings.url(server + "/desk") }
 
+    /// The course label this run's session was created for. Kept in memory only:
+    /// a different course is a different lecture, and gets its own session.
+    private var sessionCourse: String = ""
+
     var appGroupNote: String {
         AppGroup.isAvailable
             ? "App Group ready — the extension can read this session, and follow changes while it runs."
-            : "App Group not provisioned. The extension will fall back to Info.plist values and cannot follow a session switch."
+            // Without the container the extension cannot see a session at all:
+            // the session is only ever handed over through the control file.
+            : "App Group not provisioned. The extension cannot read a session, so nothing will be sent."
     }
 
     // MARK: - Broadcast health
@@ -122,40 +135,58 @@ final class AppModel: ObservableObject {
         if saved { extensionStatus = ControlChannel.readStatus() }
     }
 
-    func createSession() {
-        guard !busy else { return }
+    /// The console is the only place a session begins. Tapping it asks the
+    /// server for a session there and then, records it for the broadcast
+    /// extension, and hands back the desk URL to open. A second tap in the same
+    /// run reuses the session that console already owns — it is not a new
+    /// lecture, and replacing it mid-broadcast would orphan what is being sent.
+    func openConsole() async -> URL? {
+        guard let url = dashboardURL else {
+            notice = "Set a server before opening the console."
+            return nil
+        }
+        guard !busy else { return nil }
+
         let base = server
         let bearer = token
         let label = course.trimmingCharacters(in: .whitespacesAndNewlines)
+        let title = label.isEmpty ? "Untitled course" : label
+        // This run's session is reused only for the course it was opened for. A
+        // different course is a different lecture: it gets its own session, which
+        // a running broadcast adopts on its next frame.
+        if !sessionID.isEmpty, sessionCourse == title { return url }
+
+        // Set before the first await, so a double tap cannot create two sessions.
         busy = true
         notice = nil
 
-        Task {
-            do {
-                let id = try await CourseMateAPI.createSession(
-                    base: base,
-                    token: bearer,
-                    course: label.isEmpty ? "Untitled course" : label
-                )
-                await MainActor.run {
-                    self.sessionID = id
-                    self.decisions = []
-                    self.deskError = nil
-                    self.primedSession = nil
-                    self.seenDecisionIDs = []
-                    self.busy = false
-                    // The old card belongs to the session it described.
-                    AnswerActivity.shared.clear()
-                    // Bumps the revision, so a running broadcast moves to the
-                    // new session on its next frame instead of needing a restart.
-                    self.persist()
-                }
-            } catch {
-                await MainActor.run {
-                    self.busy = false
-                    self.notice = "Could not create a session: \(error.localizedDescription)"
-                }
+        do {
+            let id = try await CourseMateAPI.createSession(
+                base: base,
+                token: bearer,
+                course: title
+            )
+            await MainActor.run {
+                self.sessionID = id
+                self.sessionCourse = title
+                self.decisions = []
+                self.deskError = nil
+                self.primedSession = nil
+                self.seenDecisionIDs = []
+                self.busy = false
+                // The old card belongs to the session it described.
+                AnswerActivity.shared.clear()
+                // Bumps the revision, so a broadcast that is already running
+                // moves to this session on its next frame.
+                self.persist()
             }
+            return url
+        } catch {
+            await MainActor.run {
+                self.busy = false
+                self.notice = "Could not open a session: \(error.localizedDescription)"
+            }
+            return nil
         }
     }
 

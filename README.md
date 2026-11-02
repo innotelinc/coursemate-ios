@@ -120,7 +120,9 @@ open CourseMate.xcodeproj
 
 1. Enter the server URL (`http://192.168.1.20:8790` is accepted without the
    scheme) and tap **Test connection**.
-2. Name the course and tap **Start new session**.
+2. Name the course and tap **Open console**. That tap is what creates the
+   session — nothing is created at launch, and a session from a previous run is
+   never adopted.
 3. Tap **Start broadcast** — the system sheet asks you to confirm, and a red
    status bar appears.
 4. Switch to the course. Frames and audio keep flowing.
@@ -128,17 +130,31 @@ open CourseMate.xcodeproj
    Copy button — while the broadcast keeps running.
 
 Or from Control Centre at any time: long-press the record control → CourseMate
-→ Start. That path needs a session id already stored in the App Group, so start
-one from the app first.
+→ Start. That path needs a session id already written to the App Group, so open
+the console in the app first — without a session the extension sends nothing.
+
+## Sessions
+
+A session belongs to one console, not to the install. Every launch clears the
+stored session (both `cm_session` and the `session` field of `control.json`, with
+a bumped revision), so a broadcast that outlived the app stops instead of
+sending into it. The only way to get a session is to tap **Open console**: it is
+requested from the server at that moment, written to the control file, and the
+desk opens behind it. A different course name in the same run starts a new
+session.
+
+If the server ever answers `404` to an upload, the extension treats that as the
+session being gone: it stops sending, clears the session it reports, and says so
+in `Answers` — it does not keep retrying into a session nobody is watching.
 
 ## Switching courses mid-broadcast
 
-Starting a new session while broadcasting does **not** need a restart. The app
-writes the new session to `control.json` in the App Group with a bumped
-revision; the extension checks that file's modification date (a throttled
-`stat`, twice a second) and adopts the change on the next sample buffer. When
-the session changes it also clears the frame hash and the buffered PCM, because
-both belong to the previous session.
+Opening the console for a different course while broadcasting does **not** need
+a restart. The app writes the new session to `control.json` in the App Group with
+a bumped revision; the extension checks that file's modification date (a
+throttled `stat`, twice a second) and adopts the change on the next sample
+buffer. When the session changes it also clears the frame hash and the buffered
+PCM, because both belong to the previous session.
 
 The `Answers` section shows whether this worked: the dot turns green when the
 extension's last report names the session selected in the app, and the line
@@ -153,8 +169,10 @@ under it says how long ago the last frame was accepted.
 - **Audio** is accumulated from ReplayKit's LinearPCM buffers, downmixed to
   16-bit mono, wrapped in a WAV header and sent every ~12 s (and once more when
   the broadcast stops). Audio arrives only if the source is playing something.
-- **Two uploads in flight at most.** A slow network drops frames instead of
-  stalling ReplayKit's sample queue, which would stutter the broadcast itself.
+- **Frames and audio have separate budgets.** Two frame uploads may be in flight
+  and one audio chunk, so a slow transcription no longer starves the frames — a
+  shared budget was what produced `audio: the request timed out` while the desk
+  sat empty. Audio gets 45 s to answer, frames 25 s.
 
 ## Grading from the phone
 
@@ -254,7 +272,7 @@ The app writes these keys to the App Group; the extension reads them:
 | --- | --- |
 | `cm_url` | server base URL |
 | `cm_token` | optional bearer token |
-| `cm_session` | session created via `POST /api/session` |
+| `cm_session` | session created when the console is opened; cleared on every launch |
 | `cm_course` | course label |
 
 They are stored twice: in `UserDefaults` (for the Control Centre path and for

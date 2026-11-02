@@ -60,7 +60,12 @@ struct CMSettings: Equatable {
             // A cleared token is meaningful, so only fall back when there is no
             // control file at all rather than when the field is empty.
             token: control.map(\.token) ?? AppGroup.string(CMKey.token) ?? "",
-            sessionID: pick(control?.session, CMKey.session),
+            // The session has exactly one source: the control file the app
+            // writes for this run. It is deliberately never read back from
+            // UserDefaults or Info.plist — a value that survives a launch is
+            // precisely how the extension ended up posting into the session
+            // from a previous one. Empty means no broadcast can happen yet.
+            sessionID: control?.session ?? "",
             course: pick(control?.course, CMKey.course)
         )
     }
@@ -68,6 +73,22 @@ struct CMSettings: Equatable {
     /// The revision the extension last saw; the app only needs to beat it.
     static func currentRevision() -> Int {
         ControlChannel.readControl()?.revision ?? 0
+    }
+
+    /// Removes the session this install remembers, keeping everything a session
+    /// does not belong to (server, key, course label). Called on every launch:
+    /// a running broadcast sees the empty session on its next check and stops,
+    /// so nothing can keep posting into yesterday's session.
+    @discardableResult
+    static func clearStoredSession(revision: Int) -> Bool {
+        let current = load()
+        AppGroup.defaults?.removeObject(forKey: CMKey.session)
+        return CMSettings(
+            server: current.server,
+            token: current.token,
+            sessionID: "",
+            course: current.course
+        ).save(revision: revision)
     }
 
     /// Writes through to the App Group when it exists; returns whether anything
@@ -82,7 +103,13 @@ struct CMSettings: Equatable {
         // the extension itself reads the control file.
         defaults.set(Self.normalize(server), forKey: CMKey.server)
         defaults.set(token, forKey: CMKey.token)
-        defaults.set(sessionID, forKey: CMKey.session)
+        // Empty means removed, not stored-as-empty: there is no session to
+        // resurrect, and leaving the key behind is what made it look like one.
+        if sessionID.isEmpty {
+            defaults.removeObject(forKey: CMKey.session)
+        } else {
+            defaults.set(sessionID, forKey: CMKey.session)
+        }
         defaults.set(course, forKey: CMKey.course)
 
         return ControlChannel.writeControl(

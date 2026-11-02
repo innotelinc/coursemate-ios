@@ -45,8 +45,10 @@ can be done there.
 1. **Server reachable from the phone.** In the app, *Test connection* must answer
    `HTTP 200`. A Mac on the same Wi-Fi is enough; a wrong IP is the most common
    cause of "nothing happens".
-2. **A session.** *Start new session* — the extension refuses to send frames
-   without one.
+2. **A session.** *Open console* — that tap is what creates one, and the
+   extension refuses to send frames without it. Nothing is restored from a
+   previous launch, so a broadcast left running across a relaunch stays silent
+   until the console is opened again: that is the fix, not a fault.
 3. **A broadcast.** *Start broadcast*, then leave CourseMate and open the course
    in the app or browser you are actually studying from.
 4. **Notifications allowed.** Settings → CourseMate → Notifications → Allow,
