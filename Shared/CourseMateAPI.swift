@@ -82,6 +82,32 @@ enum CourseMateAPI {
         throw APIError.noSessionID
     }
 
+    /// The session the server considers current — the one the desk is watching.
+    /// Adopting it is what keeps this app's broadcast and the web desk on one
+    /// session; each creating its own is how the extension ended up posting
+    /// where nobody was looking.
+    struct CurrentSession {
+        var id: String
+        var course: String
+        var startedAt: String
+        var live: Bool
+    }
+
+    static func currentSession(base: String, token: String) async throws -> CurrentSession? {
+        let data = try await get(base: base, token: token, path: "/api/session/current")
+        guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let session = object["session"] as? [String: Any],
+              let id = session["id"] as? String,
+              !id.isEmpty
+        else { return nil }
+        return CurrentSession(
+            id: id,
+            course: session["course"] as? String ?? "",
+            startedAt: session["started_at"] as? String ?? "",
+            live: session["live"] as? Bool ?? false
+        )
+    }
+
     /// Used by the "Test server" button so a wrong IP is discovered in the app
     /// rather than 30 seconds into a lecture with no frames arriving.
     static func health(base: String, token: String) async throws -> String {

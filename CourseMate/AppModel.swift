@@ -160,6 +160,28 @@ final class AppModel: ObservableObject {
         busy = true
         notice = nil
 
+        // A session that is already being filled for this course is the one to
+        // use — the phone's previous run, or one started on the web desk. Taking
+        // it over keeps the broadcast and the desk on one session; creating a
+        // second one is what left the extension posting where nobody was looking.
+        let current = (try? await CourseMateAPI.currentSession(base: base, token: bearer)) ?? nil
+        if let current, current.live, current.course == title {
+            await MainActor.run {
+                self.sessionID = current.id
+                self.sessionCourse = title
+                self.decisions = []
+                self.deskError = nil
+                self.primedSession = nil
+                self.seenDecisionIDs = []
+                self.busy = false
+                self.notice = "Following the session this course is already using."
+                // Bumps the revision, so a broadcast that is already running
+                // moves to this session on its next frame.
+                self.persist()
+            }
+            return url
+        }
+
         do {
             let id = try await CourseMateAPI.createSession(
                 base: base,
