@@ -55,7 +55,14 @@ jobs:
       - name: The picker is the system one
         run: |
           set -euo pipefail
-          if grep -rn "RPBroadcastActivityViewController" --include=*.swift .; then
+          # A comment that names the wrong API is documentation, not usage. The
+          # guard used to fail on its own explanation — BroadcastLauncher.swift
+          # explains why that controller cannot work — so comment-only matches
+          # are dropped and this checks what actually compiles.
+          hits=$(grep -rn "RPBroadcastActivityViewController" --include=*.swift . \
+            | grep -v -E '^[^:]+:[0-9]+:[[:space:]]*//' || true)
+          if [ -n "$hits" ]; then
+            echo "$hits"
             echo "::error::RPBroadcastActivityViewController cannot start an upload extension. Use RPSystemBroadcastPickerView with preferredExtension set."
             exit 1
           fi
