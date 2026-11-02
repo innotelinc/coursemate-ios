@@ -95,17 +95,32 @@ struct ContentView: View {
         Section {
             HStack {
                 Circle()
-                    .fill(launcher.isBroadcasting ? Color.red : Color.secondary.opacity(0.35))
+                    .fill(model.extensionIsFollowing ? Color.red : Color.secondary.opacity(0.35))
                     .frame(width: 9, height: 9)
-                Text(launcher.isBroadcasting ? "Broadcasting this screen" : "Not broadcasting")
+                Text(model.extensionIsFollowing ? "Broadcasting this screen" : "Not broadcasting")
                     .font(.callout)
             }
 
-            if launcher.isBroadcasting {
-                Button("Stop broadcast", role: .destructive) { launcher.stop() }
-            } else {
-                Button("Start broadcast") { launcher.start() }
-                    .disabled(model.sessionID.isEmpty)
+            HStack(spacing: 12) {
+                // ReplayKit's own control. Shown, not hidden behind the button
+                // below: it is the one thing iOS guarantees can start an upload
+                // extension, so it stays available even if forwarding fails.
+                SystemBroadcastPicker(launcher: launcher)
+                    .frame(width: 44, height: 44)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Button("Start broadcast") { launcher.start() }
+                        .disabled(model.sessionID.isEmpty || model.extensionIsFollowing)
+                    Text("Sends this screen and the microphone until you stop it.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if model.extensionIsFollowing {
+                Text("To stop, tap the red status bar or use Control Centre — iOS does not let an app end its own broadcast.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
             }
 
             if let message = launcher.message {

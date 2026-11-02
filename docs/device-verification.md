@@ -17,6 +17,29 @@ Work through them in order. A failure early makes the later ones meaningless.
 | the plists and entitlements lint | Copy reaches the pasteboard |
 | `NSSupportsLiveActivities` and the URL scheme are declared | a tap routes to the right answer |
 
+## 0. Install the build, and prove the phone reached the server
+
+A TestFlight install is the only way to exercise a broadcast: ReplayKit's
+broadcast picker does not exist in the Simulator, so none of the checks below
+can be done there.
+
+1. In TestFlight, install the newest build of `us.innotel.coursemate`.
+2. Open CourseMate once and allow notifications. That launch is also what
+   registers the phone — the app posts its APNs token to `/api/devices`.
+3. Confirm the server saw it. `devices` counts registered phones:
+
+   ```bash
+   curl -s -H "Authorization: Bearer $COURSEMATE_TOKEN" \
+     https://cm.innotel.tech/api/health | python3 -m json.tool | sed -n '/push/,/}/p'
+   ```
+
+   `"devices": 1` means push can reach this phone. `0` means the app never
+   registered: a simulator never yields a real token, and a build whose App ID
+   lacks Push Notifications cannot obtain one either.
+4. `"environment"` must match how the build was signed — `production` for
+   TestFlight, `sandbox` for a build installed from Xcode. The wrong value is
+   `BadDeviceToken` on every phone, which reads exactly like a broken key.
+
 ## Before you start
 
 1. **Server reachable from the phone.** In the app, *Test connection* must answer

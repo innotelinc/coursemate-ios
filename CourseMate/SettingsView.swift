@@ -14,14 +14,24 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                // Its own section, headed in the words people actually use: the
+                // value is an API key you buy, and calling it a "bearer token"
+                // only made it look like something a developer has to go and
+                // find. Nothing about it is an Apple ID or an iCloud password.
                 Section {
-                    LabeledContent("Server", value: model.server)
-
-                    SecureField("API key", text: $model.token)
+                    SecureField("Paste your API key", text: $model.token)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
 
                     Link("Buy an API key", destination: Self.buyURL)
+                } header: {
+                    Text("API key")
+                } footer: {
+                    Text("The key you bought at coursemate.innotel.tech. It authorises the app and the broadcast extension, so it is the only setup a fresh install needs.")
+                }
+
+                Section {
+                    LabeledContent("Server", value: model.server)
 
                     Toggle("Use a different server", isOn: $advanced)
 
@@ -34,7 +44,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Server")
                 } footer: {
-                    Text("CourseMate runs at cm.innotel.tech, so a purchase is the whole setup: buy a key, paste it above. A server on your own network still works — turn on the switch and enter its address, but iOS only permits plain HTTP there, never over the internet.")
+                    Text("CourseMate runs at cm.innotel.tech, so a key is the whole setup. A server on your own network still works — turn on the switch and enter its address, but iOS only permits plain HTTP there, never over the internet.")
                 }
 
                 Section("Course") {
