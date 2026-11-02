@@ -52,7 +52,10 @@ final class BroadcastLauncher: NSObject, ObservableObject {
             return
         }
         message = nil
-        button.sendActions(for: .allTouchUp)
+        // `.touchUpInside` is the event the picker's own control acts on;
+        // there is no `.allTouchUp` (the aggregate constant is `.allTouchEvents`,
+        // which fires touch-down as well and opens the sheet twice).
+        button.sendActions(for: .touchUpInside)
     }
 
     /// The picker renders its button somewhere inside itself; the nesting has

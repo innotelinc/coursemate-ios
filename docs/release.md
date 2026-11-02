@@ -91,6 +91,7 @@ TestFlight build that is not a tagged release.
 | `Preflight` fails naming a secret | that value is not set on *this* repository |
 | `openssl pkey` fails | the `.p8` was truncated, or base64 with newlines was pasted raw |
 | `No signing certificate "iOS Distribution" found` | `APPLE_TEAM_ID` is wrong, or the app id is not registered |
+| `Choose a certificate to revoke … maximum number of certificates` | The account's distribution-certificate limit, not a signing misconfiguration. Automatic signing on an ephemeral runner mints a certificate whenever the private key is not there, so every release adds one until Apple refuses. Revoke an unused certificate in the portal, or import a stable `.p12` into a temporary keychain so runs share one identity |
 | `Failed to register bundle identifier` | the app id exists under a different team |
 | `entity_not_found` / 401 at upload | `APP_STORE_CONNECT_KEY_ID` and the key file disagree |
 | `Invalid Provisioning Profile` for the broadcast extension | the extension's app id needs App Groups, which `CourseMateBroadcast.entitlements` requires |
