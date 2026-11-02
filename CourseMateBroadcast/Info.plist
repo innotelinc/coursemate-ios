@@ -46,7 +46,7 @@
 	     the app has ever written to the App Group. Values in the App Group (and
 	     the control file) take precedence over these at runtime. -->
 	<key>cm_url</key>
-	<string>https://cm.innotel.tech</string>
+	<string>https://cm.innotel.us</string>
 	<key>cm_token</key>
 	<string></string>
 	<!-- Fallback for a free Apple ID, where the App Group container cannot be

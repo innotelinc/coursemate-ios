@@ -30,7 +30,7 @@ can be done there.
 
    ```bash
    curl -s -H "Authorization: Bearer $COURSEMATE_TOKEN" \
-     https://cm.innotel.tech/api/health | python3 -m json.tool | sed -n '/push/,/}/p'
+     https://cm.innotel.us/api/health | python3 -m json.tool | sed -n '/push/,/}/p'
    ```
 
    `"devices": 1` means push can reach this phone. `0` means the app never

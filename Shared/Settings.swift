@@ -45,7 +45,7 @@ struct CMSettings: Equatable {
 
     /// The hosted server. A fresh install needs no setup at all: this is the
     /// endpoint, and buying a key is the only thing left to do.
-    static let defaultServer = "https://cm.innotel.tech"
+    static let defaultServer = "https://cm.innotel.us"
 
     static func load() -> CMSettings {
         let control = ControlChannel.readControl()

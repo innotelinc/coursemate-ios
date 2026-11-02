@@ -28,7 +28,7 @@
 	     The URL is public and committed; the token is written into the bundle by
 	     the release workflow from a repository secret, so it is never in git. -->
 	<key>cm_url</key>
-	<string>https://cm.innotel.tech</string>
+	<string>https://cm.innotel.us</string>
 	<key>cm_token</key>
 	<string></string>
 	<!-- A tap on the answer card opens `coursemate://decision/<id>`. -->
@@ -49,7 +49,7 @@
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<!-- HTTPS only. The hosted server is https://cm.innotel.tech and a plain
+	<!-- HTTPS only. The hosted server is https://cm.innotel.us and a plain
 	     Internet address is refused by iOS regardless, so the arbitrary-loads
 	     escape hatch only ever hid the real problem. The local-networking
 	     exception keeps a development server on your own LAN usable. -->

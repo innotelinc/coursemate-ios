@@ -27,7 +27,7 @@ struct SettingsView: View {
                 } header: {
                     Text("API key")
                 } footer: {
-                    Text("The key you bought at coursemate.innotel.tech. It authorises the app and the broadcast extension, so it is the only setup a fresh install needs.")
+                    Text("The key you bought at cm.innotel.us. It authorises the app and the broadcast extension, so it is the only setup a fresh install needs.")
                 }
 
                 Section {
@@ -36,7 +36,7 @@ struct SettingsView: View {
                     Toggle("Use a different server", isOn: $advanced)
 
                     if advanced {
-                        TextField("https://cm.innotel.tech", text: $model.server)
+                        TextField("https://cm.innotel.us", text: $model.server)
                             .keyboardType(.URL)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
@@ -44,7 +44,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Server")
                 } footer: {
-                    Text("CourseMate runs at cm.innotel.tech, so a key is the whole setup. A server on your own network still works — turn on the switch and enter its address, but iOS only permits plain HTTP there, never over the internet.")
+                    Text("CourseMate runs at cm.innotel.us, so a key is the whole setup. A server on your own network still works — turn on the switch and enter its address, but iOS only permits plain HTTP there, never over the internet.")
                 }
 
                 Section("Course") {
@@ -94,5 +94,5 @@ struct SettingsView: View {
     /// Where a key is sold. Kept here rather than in the app model because it is
     /// a piece of the settings screen, and it must stay a plain https link: a
     /// deep link into the store would break the day the store's route changes.
-    private static let buyURL = URL(string: "https://coursemate.innotel.tech/")!
+    private static let buyURL = URL(string: "https://cm.innotel.us/#price")!
 }

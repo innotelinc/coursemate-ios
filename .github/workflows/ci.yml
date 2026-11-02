@@ -47,6 +47,22 @@ jobs:
             plutil -lint "$f"
           done
 
+      # A broadcast extension is started by RPSystemBroadcastPickerView and by
+      # nothing else. RPBroadcastActivityViewController lists streaming
+      # *services*, and returns an empty list — "This requires live streaming
+      # apps" — for an app that ships an upload extension. That mistake shipped
+      # once and cost a release; the grep is cheaper than rediscovering it.
+      - name: The picker is the system one
+        run: |
+          set -euo pipefail
+          if grep -rn "RPBroadcastActivityViewController" --include=*.swift .; then
+            echo "::error::RPBroadcastActivityViewController cannot start an upload extension. Use RPSystemBroadcastPickerView with preferredExtension set."
+            exit 1
+          fi
+          grep -rq "RPSystemBroadcastPickerView" --include=*.swift . \
+            || { echo "::error::No RPSystemBroadcastPickerView found — the broadcast cannot be started at all."; exit 1; }
+          echo "broadcast is started by the system picker"
+
       - name: Validate asset catalogs
         run: |
           set -euo pipefail
