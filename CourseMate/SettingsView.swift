@@ -94,5 +94,5 @@ struct SettingsView: View {
     /// Where a key is sold. Kept here rather than in the app model because it is
     /// a piece of the settings screen, and it must stay a plain https link: a
     /// deep link into the store would break the day the store's route changes.
-    private static let buyURL = URL(string: "https://cm.innotel.us/#price")!
+    private static let buyURL = URL(string: "https://cm.innotel.us/buy")!
 }
